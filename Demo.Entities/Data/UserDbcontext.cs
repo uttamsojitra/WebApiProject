@@ -16,5 +16,6 @@ namespace Demo.Entities.Data
         }
 
         public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<Employee> Employees { get; set; }
     }
 }

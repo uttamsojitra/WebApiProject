@@ -6,14 +6,17 @@ using System.Threading.Tasks;
 
 namespace Demo.Entities.Model
 {
-    public class User
+    public class Employee
     {
-        public long UserId { get; set; }
+        public long EmployeeId { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string Email { get; set; } = null!;
-        public long PhoneNumber { get; set; }
-        public string Password { get; set; } = null!;
+        public int  Salary { get; set; }
+        public string Department { get; set; } = null!;
 
+        public DateTime HireAt { get; set; }
+
+        public bool? Status { get; set; }
     }
 }

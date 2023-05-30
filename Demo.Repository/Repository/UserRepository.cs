@@ -1,86 +1,190 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Demo.Entities.Data;
 using Demo.Entities.Model;
+using Demo.Entities.Model.ViewModel;
 using Demo.Repository.Interface;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Demo.Repository.Repository
 {
     public class UserRepository : IUserRepository
     {
-        public readonly UserDbcontext _UserDbContext;
+       
+        private readonly UserDbcontext _userDbContext;
+        private readonly string _connectionString;
 
-        public UserRepository(UserDbcontext userContext)
+        public UserRepository(UserDbcontext userDbContext)
         {
-            _UserDbContext = userContext;
+            _userDbContext = userDbContext;
+            _connectionString = GetConnectionString();
+        }
+
+        private string GetConnectionString()
+        {
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
+
+            return configuration.GetConnectionString("DefaultConnection");
+        }
+
+        private async Task<DataTable> ExecuteQuery(string sqlQuery)
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                SqlDataAdapter adapter = new SqlDataAdapter(sqlQuery, connection);
+                DataTable table = new DataTable();
+                adapter.Fill(table);
+                return table;
+            }
         }
 
         public async Task<List<User>> GetUserList()
         {
-            List<User> users = await _UserDbContext.Users.ToListAsync();
+            string sqlQuery = "SELECT UserId, FirstName, LastName, STUFF(Email, 1, 3, '***') AS MaskedEmail, PhoneNumber, Password FROM Users";
+            DataTable table = await ExecuteQuery(sqlQuery);
+
+            List<User> users = table.Rows.Cast<DataRow>().Select(row => new User
+            {
+                UserId = Convert.ToInt32(row["UserId"]),
+                FirstName = row["FirstName"].ToString(),
+                LastName = row["LastName"].ToString(),
+                Email = row["MaskedEmail"].ToString(),
+                Password = row["Password"].ToString(),
+                PhoneNumber = Convert.ToInt64(row["PhoneNumber"])
+            }).ToList();
+
             return users;
         }
 
         public async Task<User> GetUser(long id)
         {
-            var user = await _UserDbContext.Users.FindAsync(id);
+            var user = await _userDbContext.Users.FindAsync(id);
             return user;
         }
 
-        public async Task<User> GetAuthUser(string FirstName, string Password)
+        public async Task<User> GetAuthUser(string Email, string Password)
         {
-            User user = await _UserDbContext.Users.FirstOrDefaultAsync(u => u.FirstName == FirstName && u.Password == Password);
+            User user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == Email && u.Password == Password);
             return user;
         }
         public async Task AddUser(User user)
         {
-            _UserDbContext.Users.Add(user);
-            await _UserDbContext.SaveChangesAsync();
+            _userDbContext.Users.Add(user);
+            await _userDbContext.SaveChangesAsync();
         }
 
         public async Task UpdateUser(User user)
         {
-            var existingUser = await _UserDbContext.Users.FirstOrDefaultAsync(u => u.UserId == user.UserId);
+            var existingUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.UserId == user.UserId);
             if (existingUser == null)
             {
                 throw new ArgumentException("User not found");
             }
-
             existingUser.FirstName = user.FirstName;
             existingUser.LastName = user.LastName;
             existingUser.Email = user.Email;
             existingUser.PhoneNumber = user.PhoneNumber;
-
-            await _UserDbContext.SaveChangesAsync();
+            await _userDbContext.SaveChangesAsync();
         }
 
         public async Task<bool> RemoveUser(long id)
         {
-            var user = await _UserDbContext.Users.FindAsync(id);
+            var user = await _userDbContext.Users.FindAsync(id);
             if (user != null)
             {
-                _UserDbContext.Users.Remove(user);
-                await _UserDbContext.SaveChangesAsync();
+                _userDbContext.Users.Remove(user);
+                await _userDbContext.SaveChangesAsync();
                 return true;
             }
-
             return false;
         }
 
         public int GetTotalUsersCount()
         {
-            return _UserDbContext.Users.Count();
+            return _userDbContext.Users.Count();
         }
 
-        public async Task<User> GetUserByUsername(string username)
+        public string Connection()
         {
-            // Implement the logic to retrieve a user from the database based on the provided username
-            var user = await _UserDbContext.Users.FirstOrDefaultAsync(u => u.FirstName == username);
-            return user;
+            // Load the configuration from appsettings.json
+            var configuration = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory())
+               .AddJsonFile("appsettings.json")
+               .Build();
+
+            string connectionString = configuration.GetConnectionString("DefaultConnection");
+            return connectionString;
         }
+
+        //-- Pivot Query  ---
+        public async Task<List<DepartmentViewModel>> EmpByDepartment()
+        {
+            string sqlQuery = "SELECT * FROM(SELECT EmployeeId, CONCAT(FirstName, ' ', LastName) AS FullName, Department FROM employees) AS SourceTable  PIVOT(  COUNT(employeeId) FOR Department  IN([Sales], [IT],[HR]) ) AS pivot_table ";
+            DataTable table = await ExecuteQuery(sqlQuery);
+
+            List<DepartmentViewModel> departments = table.Rows.Cast<DataRow>().Select(row => new DepartmentViewModel
+            {
+                FullName = row["FullName"].ToString(),
+                IT = row["IT"].ToString(),
+                Sales = row["Sales"].ToString(),
+                HR = row["HR"].ToString()
+            }).ToList();
+
+            return departments;
+        }
+
+        //----- CTE Query ------
+        public async Task<List<EmployeeViewModel>> EmployeeFromHR()
+        {
+            string sqlQuery = "WITH HR_Employees AS(SELECT EmployeeId, CONCAT(FirstName, ' ', LastName) AS FullName, CONVERT(varchar, HireAt, 3) AS FormattedDate, DATEPART(yyyy, HireAt) AS HireYear FROM Employees WHERE Department = 'HR') SELECT * FROM HR_Employees;";
+            DataTable table = await ExecuteQuery(sqlQuery);
+
+            List<EmployeeViewModel> employees = table.Rows.Cast<DataRow>().Select(row => new EmployeeViewModel
+            {
+                EmployeeId = Convert.ToInt32(row["EmployeeId"]),
+                FullName = row["FullName"].ToString(),
+                HireYear = Convert.ToInt32(row["HireYear"]),
+                HireAt = row["FormattedDate"].ToString()
+            }).ToList();
+
+            return employees;
+        }
+
+       
+        //----- xml path query ------
+        public async Task<string> GetHiringDates()
+        {
+            string sqlQuery = "SELECT STUFF((SELECT ',' + CONVERT(VARCHAR(10), HireAt, 120) FROM Employees FOR XML PATH(''), TYPE).value('.', 'VARCHAR(MAX)'), 1, 1, '') AS HiringDates";
+            DataTable table = await ExecuteQuery(sqlQuery);
+
+            string hiringDates = table.Rows.Count > 0 ? table.Rows[0]["HiringDates"].ToString() : string.Empty;
+            return hiringDates;
+        }
+
+
+        //-----   xml path alternatives  - STRING_AGG  ------
+        public async Task<string> GetAllFirstName()
+        {
+            string sqlQuery = "SELECT STRING_AGG(FirstName, ', ') AS ConcatenatedNames FROM Employees;";
+            DataTable table = await ExecuteQuery(sqlQuery);
+
+            string firstNames = table.Rows.Count > 0 ? table.Rows[0]["ConcatenatedNames"].ToString() : string.Empty;
+            return firstNames;
+        }
+
+       
     }
 }
+
+

@@ -18,9 +18,9 @@ namespace Demo.Business.Service
             _userRepository = userRepository;
         }
 
-        public async Task<User> GetAuthUser(string FirstName, string Password)
+        public async Task<User> GetAuthUser(string Email, string Password)
         {
-            var user = await _userRepository.GetAuthUser(FirstName, Password);  
+            var user = await _userRepository.GetAuthUser(Email, Password);  
             return user;             
         }
 

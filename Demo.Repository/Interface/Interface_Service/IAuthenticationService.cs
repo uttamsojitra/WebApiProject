@@ -9,7 +9,7 @@ namespace Demo.Business.Interface.Interface_Service
 {
     public interface IAuthenticationService
     {
-        public Task<User> GetAuthUser(string FirstName, string Password);
+        public Task<User> GetAuthUser(string Email, string Password);
     }
 
 }

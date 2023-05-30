@@ -1,4 +1,5 @@
 ﻿using Demo.Entities.Model;
+using Demo.Entities.Model.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,10 @@ namespace Demo.Repository.Interface
         public Task<bool> RemoveUser(long id);
         public int GetTotalUsersCount();
 
-        public Task<User> GetAuthUser(string FirstName, string Password);
+        public Task<User> GetAuthUser(string Email, string Password);
+        public Task<List<DepartmentViewModel>> EmpByDepartment();
+        public Task<List<EmployeeViewModel>> EmployeeFromHR();
+        public Task<string> GetHiringDates();
+        public Task<string> GetAllFirstName();
     }
 }

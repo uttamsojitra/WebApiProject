@@ -8,12 +8,13 @@ using System.Threading.Tasks;
 using Demo.Business.Exception;
 using Demo.Business.Interface.Interface_Service;
 using Microsoft.AspNetCore.Authorization;
+using Demo.Entities.Model.ViewModel;
 
 namespace Demo.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -84,8 +85,39 @@ namespace Demo.Controllers
             {
                 throw new InvalidOperationException(MessageHelper.UserNotRemove);
             }
-
             return NoContent();
+        }
+
+        [HttpGet]
+        [Route("GetEmployeesByDepartment")]
+        public async Task<ActionResult<List<DepartmentViewModel>>> GetEmployeesByDepartment()
+        {
+            List<DepartmentViewModel> departments = await _userService.EmployeeByDept();
+            return Ok(departments);
+        }
+
+        [HttpGet]
+        [Route("GetEmployeesFromHR")]
+        public async Task<ActionResult<List<EmployeeViewModel>>> GetEmployeesFromHR()
+        {
+            List<EmployeeViewModel> employees = await _userService.EmployeeFromHR();
+            return Ok(employees);
+        }
+
+        [HttpGet]
+        [Route("GerAllHireDates")]
+        public async Task<ActionResult<string>> GerAllHireDates()
+        {
+            string dates = await _userService.GerAllHireDates();
+            return Ok(dates);
+        }
+
+        [HttpGet]
+        [Route("GetEmployeesFirstName")]
+        public async Task<ActionResult<string>> GetEmployeesFirstName()
+        {
+            string names = await _userService.GetEmpFirstName();
+            return Ok(names);
         }
     }
 }

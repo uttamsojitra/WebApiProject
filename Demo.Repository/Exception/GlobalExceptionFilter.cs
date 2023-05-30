@@ -39,7 +39,6 @@ namespace Demo.Business.Exception
                     errorResponse.Message = MessageHelper.UserNotRemove;
                     errorResponse.ErrorCode = 401;
                     break;
-                // Add more cases for handling other exception types if needed
                 default:
                     break;
             }

@@ -1,4 +1,5 @@
 ﻿using Demo.Entities.Model;
+using Demo.Entities.Model.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,5 +17,10 @@ namespace Demo.Business.Interface.Interface_Service
         public Task CreateUser(User user);
         public Task UpdateUser(User user);
         public Task<bool> DeleteUser(int id);
+
+        public  Task<List<DepartmentViewModel>> EmployeeByDept();
+        public  Task<List<EmployeeViewModel>> EmployeeFromHR();
+        public  Task<string> GerAllHireDates();
+        public  Task<string> GetEmpFirstName();
     }
 }

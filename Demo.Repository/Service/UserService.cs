@@ -1,7 +1,9 @@
 ﻿using Demo.Business.Exception;
 using Demo.Business.Interface.Interface_Service;
 using Demo.Entities.Model;
+using Demo.Entities.Model.ViewModel;
 using Demo.Repository.Interface;
+using Demo.Repository.Repository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -62,6 +64,22 @@ namespace Demo.Repository.Service
             return true;    
         }
 
+        public async Task<List<DepartmentViewModel>> EmployeeByDept()
+        {
+           return await _userRepository.EmpByDepartment();
+        } 
+        public async Task<List<EmployeeViewModel>> EmployeeFromHR()
+        {
+           return await _userRepository.EmployeeFromHR();
+        }
+        public async Task<string> GerAllHireDates()
+        {
+            return await _userRepository.GetHiringDates();
+        }
+        public async Task<string> GetEmpFirstName()
+        {
+            return await _userRepository.GetAllFirstName();
+        }
 
     }
 
