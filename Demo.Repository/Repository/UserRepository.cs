@@ -35,7 +35,7 @@ namespace Demo.Repository.Repository
 
             return configuration.GetConnectionString("DefaultConnection");
         }
-
+        //------    DataTable stores result of query     -----
         private async Task<DataTable> ExecuteQuery(string sqlQuery)
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
@@ -49,6 +49,7 @@ namespace Demo.Repository.Repository
             }
         }
 
+        //------   User CRUD operation    -----
         public async Task<List<User>> GetUserList()
         {
             string sqlQuery = "SELECT UserId, FirstName, LastName, STUFF(Email, 1, 3, '***') AS MaskedEmail, PhoneNumber, Password FROM Users";
@@ -115,20 +116,8 @@ namespace Demo.Repository.Repository
             return _userDbContext.Users.Count();
         }
 
-        public string Connection()
-        {
-            // Load the configuration from appsettings.json
-            var configuration = new ConfigurationBuilder()
-               .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json")
-               .Build();
-
-            string connectionString = configuration.GetConnectionString("DefaultConnection");
-            return connectionString;
-        }
-
         //-- Pivot Query  ---
-        public async Task<List<DepartmentViewModel>> EmpByDepartment()
+       public async Task<List<DepartmentViewModel>> EmpByDepartment()
         {
             string sqlQuery = "SELECT * FROM(SELECT EmployeeId, CONCAT(FirstName, ' ', LastName) AS FullName, Department FROM employees) AS SourceTable  PIVOT(  COUNT(employeeId) FOR Department  IN([Sales], [IT],[HR]) ) AS pivot_table ";
             DataTable table = await ExecuteQuery(sqlQuery);
@@ -160,7 +149,6 @@ namespace Demo.Repository.Repository
 
             return employees;
         }
-
        
         //----- xml path query ------
         public async Task<string> GetHiringDates()
@@ -172,7 +160,6 @@ namespace Demo.Repository.Repository
             return hiringDates;
         }
 
-
         //-----   xml path alternatives  - STRING_AGG  ------
         public async Task<string> GetAllFirstName()
         {
@@ -182,8 +169,6 @@ namespace Demo.Repository.Repository
             string firstNames = table.Rows.Count > 0 ? table.Rows[0]["ConcatenatedNames"].ToString() : string.Empty;
             return firstNames;
         }
-
-       
     }
 }
 

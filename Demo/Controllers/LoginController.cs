@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Demo.Controllers
@@ -20,8 +21,7 @@ namespace Demo.Controllers
         public LoginController(IConfiguration configuration, IAuthenticationService authService)
         {
             _config = configuration;
-            _authService = authService;   
-         
+            _authService = authService;        
         }
 
        private async Task<User> AuthnticateUser(string Email, string Password)
@@ -34,20 +34,30 @@ namespace Demo.Controllers
             return user;   
         }
 
-        private string GenerateToken(string Email, string Password)
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
+        }
+       
+        private string GenerateToken(string Email)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {
                 new Claim("Email",Email),
-                new Claim("Password",Password),
+                
             };
             var token = new JwtSecurityToken(
                 _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
                 claims,
-                expires: DateTime.Now.AddMinutes(15),
+                expires: DateTime.Now.AddMinutes(10),
                 signingCredentials: credentials);
        
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -62,9 +72,9 @@ namespace Demo.Controllers
             var validUser = await AuthnticateUser(Email, Password);
             if (validUser != null)
             {
-                var token = GenerateToken(Email, Password);
-                HttpContext.Response.Cookies.Append("token", token, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.None, Expires = DateTime.Now.AddMinutes(5) });
-                response =  Ok(new {token = token});                 
+                var accessToken = GenerateToken(Email);
+                var refreshToken = GenerateRefreshToken();
+                response =  Ok(new {token = accessToken, refreshToken = refreshToken });                 
             }
             return response;        
         }

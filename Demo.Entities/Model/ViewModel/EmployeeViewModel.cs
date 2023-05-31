@@ -10,10 +10,8 @@ namespace Demo.Entities.Model.ViewModel
     {
         public long EmployeeId { get; set; }
         public string? FullName { get; set; }
-       
         public string HireAt { get; set; }
         public int HireYear { get; set; }   
 
-        
     }
 }

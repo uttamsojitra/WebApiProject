@@ -21,6 +21,7 @@ namespace Demo.Repository.Service
             _userRepository = userRepository;
         }
 
+        //-------    User CRUD operation    -------
         public async Task<User> GetUserById(int id)
         {
             return await _userRepository.GetUser(id);
@@ -64,6 +65,7 @@ namespace Demo.Repository.Service
             return true;    
         }
 
+        //-------    Sql queries on Employee table    -------
         public async Task<List<DepartmentViewModel>> EmployeeByDept()
         {
            return await _userRepository.EmpByDepartment();
@@ -80,7 +82,5 @@ namespace Demo.Repository.Service
         {
             return await _userRepository.GetAllFirstName();
         }
-
     }
-
 }

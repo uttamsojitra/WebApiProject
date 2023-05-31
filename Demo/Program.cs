@@ -54,15 +54,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.Use(async (context, next) =>
-{
-    var token = context.Request.Cookies["token"]?.ToString(); //Store in httponly cookie
-    if (!string.IsNullOrWhiteSpace(token))
-    {
-        context.Request.Headers.Add("Authorization", "Bearer " + token);
-    }
-    await next();
-});
+//app.Use(async (context, next) =>
+//{
+//    var token = context.Request.Cookies["token"]?.ToString(); //Store in httponly cookie
+//    if (!string.IsNullOrWhiteSpace(token))
+//    {
+//        context.Request.Headers.Add("Authorization", "Bearer " + token);
+//    }
+//    await next();
+//});
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
