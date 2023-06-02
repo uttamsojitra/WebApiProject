@@ -45,11 +45,16 @@ namespace Demo.Repository.Service
             return  _userRepository.GetTotalUsersCount();
         }
 
-        public async Task CreateUser(User user)
+        public async Task<User> CreateUser(UserSignUpViewModel user)
         {
-            await _userRepository.AddUser(user);
+            var newUser = await _userRepository.AddUser(user);
+            return newUser;
         }
 
+        public async Task<User> GetEmailAndToken(string email, string token)
+        {
+            return await  _userRepository.GetUserByEmailAndToken(email, token);
+        }
         public async Task UpdateUser(User user)
         {
             await _userRepository.UpdateUser(user);

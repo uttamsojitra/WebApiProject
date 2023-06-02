@@ -9,6 +9,7 @@ using Demo.Business.Exception;
 using Demo.Business.Interface.Interface_Service;
 using Microsoft.AspNetCore.Authorization;
 using Demo.Entities.Model.ViewModel;
+using System.Security.Cryptography;
 
 namespace Demo.Controllers
 {
@@ -23,7 +24,20 @@ namespace Demo.Controllers
         {
             _userService = userService;
         }
- 
+
+        [AllowAnonymous]
+        [HttpPost]
+        [Route("SignUpUser")]
+        public async Task<IActionResult> CreateUser( [FromForm] UserSignUpViewModel user)
+        {
+           var newUser =  await _userService.CreateUser(user);
+            if(newUser == null)
+            {
+                return Ok("Email Already Exists!");
+            }
+            return Ok("User Added Sucessfully!");         
+        }
+
         [HttpGet]
         [Route("GetUserById")]
         public async Task<ActionResult<User>> GetUserById(int id)
@@ -55,12 +69,26 @@ namespace Demo.Controllers
             return Ok(response);
         }
 
-        [HttpPost]
-        [Route("CreateUser")]
-        public async Task<string> CreateUser(User user)
+
+
+        [AllowAnonymous]
+        [HttpGet("activate")]
+        public async Task<IActionResult> ActivateAccount(string email, string token)
         {
-            await _userService.CreateUser(user);
-            return "User Added";
+            // Find the user by email and activation token
+            User user = await _userService.GetEmailAndToken(email, token);
+
+            if (user == null)
+            {
+                return BadRequest("Invalid activation token or email.");
+            }
+            if (user.Status == true)
+            {
+
+                return Ok("Status Already Activated");
+            }
+
+            return Ok("Your status has been activated successfully.");
         }
 
         [HttpPut]
@@ -85,7 +113,7 @@ namespace Demo.Controllers
             {
                 throw new InvalidOperationException(MessageHelper.UserNotRemove);
             }
-            return NoContent();
+            return Ok("User Deleted");
         }
 
         [HttpGet]

@@ -11,5 +11,7 @@ namespace Demo.Business.Exception
         public const string InvalidUser = "User not found,Please enter Valid Id";
 
         public const string UserNotRemove = "User not removed, Please enter Valid Id";
+
+        public const string TokenInvalid = "Token is not valid";
     }
 }

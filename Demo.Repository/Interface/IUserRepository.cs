@@ -12,7 +12,9 @@ namespace Demo.Repository.Interface
     {
         public Task<List<User>> GetUserList();
         public Task<User> GetUser(long id);
-        public Task AddUser(User user);
+        
+        public Task<User> AddUser(UserSignUpViewModel user);
+        public Task<User> GetUserByEmailAndToken(string email, string token);
         public Task UpdateUser(User user);
         public Task<bool> RemoveUser(long id);
         public int GetTotalUsersCount();

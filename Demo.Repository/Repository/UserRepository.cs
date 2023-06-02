@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Demo.Business.Interface;
 using Demo.Entities.Data;
 using Demo.Entities.Model;
 using Demo.Entities.Model.ViewModel;
@@ -19,11 +21,13 @@ namespace Demo.Repository.Repository
        
         private readonly UserDbcontext _userDbContext;
         private readonly string _connectionString;
+        private readonly IEmailSender _emailSender;
 
-        public UserRepository(UserDbcontext userDbContext)
+        public UserRepository(UserDbcontext userDbContext, IEmailSender emailSender)
         {
             _userDbContext = userDbContext;
             _connectionString = GetConnectionString();
+            _emailSender = emailSender;
         }
 
         private string GetConnectionString()
@@ -73,16 +77,59 @@ namespace Demo.Repository.Repository
             var user = await _userDbContext.Users.FindAsync(id);
             return user;
         }
-
+       
         public async Task<User> GetAuthUser(string Email, string Password)
         {
             User user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == Email && u.Password == Password);
             return user;
         }
-        public async Task AddUser(User user)
+
+
+        //Add New User and Mail sent for status activation
+        private string CreateRandomToken()
         {
-            _userDbContext.Users.Add(user);
-            await _userDbContext.SaveChangesAsync();
+            return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+        }
+        public async Task<User> AddUser(UserSignUpViewModel user)
+        {
+           var ExistUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+
+            if (ExistUser == null)
+            { 
+                var token = CreateRandomToken();
+
+                User newUser = new();
+               
+                newUser.Email = user.Email;
+                newUser.Password = user.Password;
+                newUser.FirstName = user.FirstName; 
+                newUser.LastName = user.LastName;   
+                newUser.PhoneNumber = user.PhoneNumber;
+                newUser.Token = token;
+                
+                _userDbContext.Users.Add(newUser);
+                await _userDbContext.SaveChangesAsync();
+
+                var message = "https://localhost:7149/api/User/activate?email=" + user.Email +"&token="+ token;
+                var subject = "User Status ActivationLink";
+                await _emailSender.SendEmailAsync(user.Email, message, subject);
+
+                return newUser;
+            }
+            return null;   
+        }
+
+        public async Task<User> GetUserByEmailAndToken(string email, string token)
+        {
+            var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == email && u.Token == token);
+            if (user != null)
+            {
+                user.Status = true;
+                _userDbContext.Update(user);
+                _userDbContext.SaveChangesAsync();
+                return user;
+            }
+            return user;
         }
 
         public async Task UpdateUser(User user)
@@ -169,6 +216,8 @@ namespace Demo.Repository.Repository
             string firstNames = table.Rows.Count > 0 ? table.Rows[0]["ConcatenatedNames"].ToString() : string.Empty;
             return firstNames;
         }
+
+        
     }
 }
 

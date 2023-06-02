@@ -11,10 +11,12 @@ namespace Demo.Business.Interface.Interface_Service
     public interface IUserService
     {
         public Task<User> GetUserById(int id);
+       
         public Task<IEnumerable<User>> GetAllUsers(int pageNumber, int pageSize);
         public int GetTotalPages(int pageSize);
         public int GetTotalUsersCount();
-        public Task CreateUser(User user);
+        public Task<User> CreateUser(UserSignUpViewModel user);
+        public Task<User> GetEmailAndToken(string email, string token);
         public Task UpdateUser(User user);
         public Task<bool> DeleteUser(int id);
 

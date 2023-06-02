@@ -55,7 +55,7 @@ namespace Demo.Controllers
                 _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
                 claims,
-                expires: DateTime.Now.AddHours(10), // Set the refresh token expiration time
+                expires: DateTime.Now.AddDays(2), // Set the refresh token expiration time
                 signingCredentials: credentials);
 
             var accessTokenString = new JwtSecurityTokenHandler().WriteToken(accessToken);
@@ -67,10 +67,12 @@ namespace Demo.Controllers
 
         private ClaimsPrincipal ValidateRefreshToken(string token)
         {
+            //handling and validating (JWTs).
             var tokenHandler = new JwtSecurityTokenHandler();
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
+                //converting the specified key from the configuration to a byte array using UTF-8 encoding.
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
                 ValidateIssuer = true,
                 ValidIssuer = _config["Jwt:Issuer"],
@@ -80,29 +82,22 @@ namespace Demo.Controllers
                 ClockSkew = TimeSpan.Zero
             };
 
+            //It is used to capture the validated security token if the token validation is successful.
             SecurityToken securityToken;
             ClaimsPrincipal principal = null;
 
             try
             {
+                //ValidateToken method of the JwtSecurityTokenHandler
                 var result = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
                 if (result.Identity is ClaimsIdentity claimsIdentity)
                 {
                     principal = new ClaimsPrincipal(claimsIdentity);
                 }
             }
-            catch (SecurityTokenException)
+            
+            catch 
             {
-                // Handle token validation error
-                // Return an appropriate response or throw a custom exception
-                // You can customize the error message or error handling based on your requirements
-                return null;
-            }
-            catch (Exception ex)
-            {
-                // Handle other exceptions if necessary
-                // Return an appropriate response or throw a custom exception
-                // You can customize the error message or error handling based on your requirements
                 return null;
             }
 
@@ -114,6 +109,8 @@ namespace Demo.Controllers
         public async Task<IActionResult> Login(string Email, string Password)
         {
             IActionResult response = Unauthorized();
+            
+            
             var validUser = await AuthnticateUser(Email, Password);
             if (validUser != null)
             {
@@ -124,7 +121,7 @@ namespace Demo.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("refreshTokenValidation")]
+        [HttpPost("RefreshTokenValidation")]
         public IActionResult RefreshToken(string refreshToken)
         {
             var principal = ValidateRefreshToken(refreshToken);

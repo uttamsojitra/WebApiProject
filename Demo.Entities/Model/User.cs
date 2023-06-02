@@ -15,5 +15,9 @@ namespace Demo.Entities.Model
         public long PhoneNumber { get; set; }
         public string Password { get; set; } = null!;
 
+        public bool Status { get; set; }    
+
+        public string? Token { get; set; }   
+
     }
 }

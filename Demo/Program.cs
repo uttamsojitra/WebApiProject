@@ -1,5 +1,7 @@
 using Demo.Business.Exception;
+using Demo.Business.Interface;
 using Demo.Business.Interface.Interface_Service;
+using Demo.Business.Repository;
 using Demo.Business.Service;
 using Demo.Entities.Data;
 using Demo.Repository.Interface;
@@ -9,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +27,36 @@ builder.Services.AddControllers(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+//Authenticate button 
+builder.Services.AddSwaggerGen(
+    c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Title = "My API",
+            Version = "v1"
+        });
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            In = ParameterLocation.Header,
+            Description = "Please insert JWT with Bearer into field",
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey
+        });
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+   {
+     new OpenApiSecurityScheme
+     {
+       Reference = new OpenApiReference
+       {
+         Type = ReferenceType.SecurityScheme,
+         Id = "Bearer"
+       }
+      },
+      new string[] { }
+    }
+  });
+});
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -38,13 +71,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     };
 });
 
-
 builder.Services.AddDbContext<UserDbcontext>((options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-
 
 var app = builder.Build();
 
@@ -52,17 +84,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Demo v1"));
 }
-//app.Use(async (context, next) =>
-//{
-//    var token = context.Request.Cookies["token"]?.ToString(); //Store in httponly cookie
-//    if (!string.IsNullOrWhiteSpace(token))
-//    {
-//        context.Request.Headers.Add("Authorization", "Bearer " + token);
-//    }
-//    await next();
-//});
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
