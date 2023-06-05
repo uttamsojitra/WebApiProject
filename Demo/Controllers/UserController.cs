@@ -77,6 +77,10 @@ namespace Demo.Controllers
         {
             // Find the user by email and activation token
             User userStatus = await _userService.GetUserStatus(email, token);
+            if (userStatus == null)
+            {
+                return BadRequest("Invalid activation token or email.");
+            }
             if (userStatus.Status == true)
             {
                 return Ok("Status Already Activated");

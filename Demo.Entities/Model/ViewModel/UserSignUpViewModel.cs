@@ -23,9 +23,9 @@ namespace Demo.Entities.Model.ViewModel
         [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Invalid phone number. Phone number must start with 6, 7, 8, or 9 and must be 10 digits.")]
         public long PhoneNumber { get; set; }
 
-        //[Required, MinLength(6, ErrorMessage ="Please enter atleast 6 character")]
         [Required(ErrorMessage = "Password is required.")]
-        [MinLength(6, ErrorMessage = "Please enter at least 6 characters.")]
+        [MinLength(8, ErrorMessage = "Please enter at least 8 characters.")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$", ErrorMessage = "Password must be strong.")]
         public string Password { get; set; } = string.Empty;
         [Required,Compare("Password")]
         public string ConfirmPassword { get; set; } = string.Empty;

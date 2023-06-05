@@ -116,14 +116,10 @@ namespace Demo.Repository.Repository
                 string filePath = Path.Combine(Directory.GetCurrentDirectory(), templatePath);
 
                 string MailText;
-                using (StreamReader reader = new StreamReader(filePath))
+                using (StreamReader reader = new (filePath))
                 {
                     MailText = reader.ReadToEnd();
                 }
-
-                //string templatePath = Path.Combine("Template", "Account_Activation_EmailTemplate.html");
-
-                //string emailTemplate = await File.ReadAllTextAsync(templatePath);
 
                 string activationLink = "https://localhost:7149/api/User/activate?email=" + user.Email + "&token=" + token;
 
