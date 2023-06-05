@@ -55,6 +55,11 @@ namespace Demo.Repository.Service
         {
             return await  _userRepository.GetUserByEmailAndToken(email, token);
         }
+
+        public async Task<User> GetUserStatus(string email, string token)
+        {
+            return await _userRepository.GetUserStatus(email, token);
+        }
         public async Task UpdateUser(User user)
         {
             await _userRepository.UpdateUser(user);

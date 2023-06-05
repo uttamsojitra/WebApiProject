@@ -76,19 +76,20 @@ namespace Demo.Controllers
         public async Task<IActionResult> ActivateAccount(string email, string token)
         {
             // Find the user by email and activation token
-            User user = await _userService.GetEmailAndToken(email, token);
+            User userStatus = await _userService.GetUserStatus(email, token);
+            if (userStatus.Status == true)
+            {
+                return Ok("Status Already Activated");
+            }
 
+            User user = await _userService.GetEmailAndToken(email, token);
             if (user == null)
             {
                 return BadRequest("Invalid activation token or email.");
             }
-            if (user.Status == true)
-            {
+            
 
-                return Ok("Status Already Activated");
-            }
-
-            return Ok("Your status has been activated successfully.");
+            return Ok("Your account has been activated successfully.");
         }
 
         [HttpPut]

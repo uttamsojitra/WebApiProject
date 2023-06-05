@@ -109,9 +109,11 @@ namespace Demo.Controllers
         public async Task<IActionResult> Login(string Email, string Password)
         {
             IActionResult response = Unauthorized();
-            
-            
             var validUser = await AuthnticateUser(Email, Password);
+            if(validUser.Status == false)
+            {
+                return Ok("Please activate your account");   
+            }
             if (validUser != null)
             {
                 var (accessToken, refreshToken) = GenerateTokens(Email);

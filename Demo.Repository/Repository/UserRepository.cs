@@ -105,12 +105,16 @@ namespace Demo.Repository.Repository
                 newUser.FirstName = user.FirstName; 
                 newUser.LastName = user.LastName;   
                 newUser.PhoneNumber = user.PhoneNumber;
+                newUser.Status = false;
                 newUser.Token = token;
                 
                 _userDbContext.Users.Add(newUser);
                 await _userDbContext.SaveChangesAsync();
 
-                var message = "https://localhost:7149/api/User/activate?email=" + user.Email +"&token="+ token;
+                var activationLink = "https://localhost:7149/api/User/activate?email=" + user.Email + "&token=" + token;
+
+                var message = "Please active your account by clicking link " + activationLink ;
+                
                 var subject = "User Status ActivationLink";
                 await _emailSender.SendEmailAsync(user.Email, message, subject);
 
@@ -129,6 +133,11 @@ namespace Demo.Repository.Repository
                 _userDbContext.SaveChangesAsync();
                 return user;
             }
+            return user;
+        }
+        public async Task<User> GetUserStatus(string email, string token)
+        {
+            var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == email && u.Token == token);
             return user;
         }
 

@@ -17,6 +17,7 @@ namespace Demo.Business.Interface.Interface_Service
         public int GetTotalUsersCount();
         public Task<User> CreateUser(UserSignUpViewModel user);
         public Task<User> GetEmailAndToken(string email, string token);
+        public Task<User> GetUserStatus(string email, string token);
         public Task UpdateUser(User user);
         public Task<bool> DeleteUser(int id);
 
