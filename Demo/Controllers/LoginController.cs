@@ -35,88 +35,23 @@ namespace Demo.Controllers
             return user;   
         }
 
-        private (string, string) GenerateTokens(string Email)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
-            {
-               new Claim("Email", Email)
-             };
-
-            var accessToken = new JwtSecurityToken(
-                _config["Jwt:Issuer"],
-                _config["Jwt:Audience"],
-                claims,
-                expires: DateTime.Now.AddMinutes(5), // Set the access token expiration time
-                signingCredentials: credentials);
-
-            var refreshToken = new JwtSecurityToken(
-                _config["Jwt:Issuer"],
-                _config["Jwt:Audience"],
-                claims,
-                expires: DateTime.Now.AddDays(2), // Set the refresh token expiration time
-                signingCredentials: credentials);
-
-            var accessTokenString = new JwtSecurityTokenHandler().WriteToken(accessToken);
-            var refreshTokenString = new JwtSecurityTokenHandler().WriteToken(refreshToken);
-
-            return (accessTokenString, refreshTokenString);
-        }
-
-
-        private ClaimsPrincipal ValidateRefreshToken(string token)
-        {
-            //handling and validating (JWTs).
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                //converting the specified key from the configuration to a byte array using UTF-8 encoding.
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
-                ValidateIssuer = true,
-                ValidIssuer = _config["Jwt:Issuer"],
-                ValidateAudience = true,
-                ValidAudience = _config["Jwt:Audience"],
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-
-            //It is used to capture the validated security token if the token validation is successful.
-            SecurityToken securityToken;
-            ClaimsPrincipal principal = null;
-
-            try
-            {
-                //ValidateToken method of the JwtSecurityTokenHandler
-                var result = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
-                if (result.Identity is ClaimsIdentity claimsIdentity)
-                {
-                    principal = new ClaimsPrincipal(claimsIdentity);
-                }
-            }
-            
-            catch 
-            {
-                return null;
-            }
-
-            return principal;
-        }
-
         [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> Login(string Email, string Password)
+        public async Task<IActionResult> Login(string email, string password)
         {
             IActionResult response = Unauthorized();
-            var validUser = await AuthnticateUser(Email, Password);
-            if(validUser.Status == false)
+            var validUser = await AuthnticateUser(email, password);
+            if(validUser == null)
             {
-                return Ok("Please activate your account");   
+                return response;
+            }
+            if (validUser.Status == false)
+            {
+                return Ok("Please activate your account");
             }
             if (validUser != null)
             {
-                var (accessToken, refreshToken) = GenerateTokens(Email);
+                var (accessToken, refreshToken) = _authService.GenerateTokens(email);
                 response = Ok(new { token = accessToken, refreshToken = refreshToken });
             }
             return response;
@@ -126,11 +61,11 @@ namespace Demo.Controllers
         [HttpPost("RefreshTokenValidation")]
         public IActionResult RefreshToken(string refreshToken)
         {
-            var principal = ValidateRefreshToken(refreshToken);
+            var principal = _authService.ValidateRefreshToken(refreshToken);
             if (principal != null)
             {
                 var email = principal.Claims.First(c => c.Type == "Email").Value;
-                var (accessToken, newRefreshToken) = GenerateTokens(email);
+                var (accessToken, newRefreshToken) = _authService.GenerateTokens(email);
                 return Ok(new { token = accessToken, refreshToken = newRefreshToken });
             }
             return Unauthorized();

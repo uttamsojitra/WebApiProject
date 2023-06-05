@@ -13,6 +13,7 @@ using Demo.Repository.Interface;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using MimeKit;
 
 namespace Demo.Repository.Repository
 {
@@ -95,11 +96,10 @@ namespace Demo.Repository.Repository
            var ExistUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
 
             if (ExistUser == null)
-            { 
+            {
                 var token = CreateRandomToken();
 
                 User newUser = new();
-               
                 newUser.Email = user.Email;
                 newUser.Password = user.Password;
                 newUser.FirstName = user.FirstName; 
@@ -111,14 +111,32 @@ namespace Demo.Repository.Repository
                 _userDbContext.Users.Add(newUser);
                 await _userDbContext.SaveChangesAsync();
 
-                var activationLink = "https://localhost:7149/api/User/activate?email=" + user.Email + "&token=" + token;
 
-                var message = "Please active your account by clicking link " + activationLink ;
+                string templatePath = Path.Combine("Template", "Account_Activation_EmailTemplate.html");
+                string filePath = Path.Combine(Directory.GetCurrentDirectory(), templatePath);
+
+                string MailText;
+                using (StreamReader reader = new StreamReader(filePath))
+                {
+                    MailText = reader.ReadToEnd();
+                }
+
+                //string templatePath = Path.Combine("Template", "Account_Activation_EmailTemplate.html");
+
+                //string emailTemplate = await File.ReadAllTextAsync(templatePath);
+
+                string activationLink = "https://localhost:7149/api/User/activate?email=" + user.Email + "&token=" + token;
+
+                    string emailContent = MailText
+                        .Replace("{{UserName}}", newUser.FirstName + " " + newUser.LastName)
+                        .Replace("{{ActivationLink}}", activationLink);
+
+
+                    var subject = "User Status ActivationLink";
+                    await _emailSender.SendEmailAsync(user.Email, emailContent, subject);
+
+                    return newUser;
                 
-                var subject = "User Status ActivationLink";
-                await _emailSender.SendEmailAsync(user.Email, message, subject);
-
-                return newUser;
             }
             return null;   
         }

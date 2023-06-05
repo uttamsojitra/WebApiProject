@@ -11,12 +11,9 @@ namespace Demo.Business.Repository
 {
     public class EmailSender : IEmailSender
     {
-        public Task SendEmailAsync(string email, string message, string Subject)
+        public async Task SendEmailAsync(string email, string message, string subject)
         {
-            var Email = email;
-            var subject = Subject;
-            var Message = message;
-
+            
             var client = new SmtpClient("172.16.10.7", 25)
             {
                 EnableSsl = false,
@@ -24,12 +21,16 @@ namespace Demo.Business.Repository
                 Credentials = new NetworkCredential("uttam.sojitra@internal.mail", "tatva123")
             };
 
-            return client.SendMailAsync(
-                new MailMessage(from: "uttam.sojitra@internal.mail",
-                                to: Email,
-                                subject,
-                                Message
-                                ));
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress("uttam.sojitra@internal.mail"),
+                To = { email },
+                Subject = subject,
+                IsBodyHtml = true,// Set the email body as HTML content
+                Body = message
+            };
+
+            await client.SendMailAsync(mailMessage);
         }
     }
 }

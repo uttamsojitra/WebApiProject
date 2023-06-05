@@ -8,6 +8,6 @@ namespace Demo.Business.Interface
 {
     public interface IEmailSender
     {
-        Task SendEmailAsync(string email, string message, string Subject);
+        Task SendEmailAsync(string email, string message, string subject);
     }
 }
