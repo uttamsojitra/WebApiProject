@@ -1,3 +1,5 @@
+using OfficeOpenXml;
+using System.Text;
 using Demo.Business.Exception;
 using Demo.Business.Interface;
 using Demo.Business.Interface.Interface_Service;
@@ -12,7 +14,11 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
+
+
+
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;// Set the license context to NonCommercial
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,10 +84,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())    
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Demo v1"));

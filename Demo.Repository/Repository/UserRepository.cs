@@ -55,6 +55,12 @@ namespace Demo.Repository.Repository
         }
 
         //------   User CRUD operation    -----
+
+        public async Task<List<User>> GetUsersData()
+        {
+          return  await _userDbContext.Users.ToListAsync(); 
+        }
+
         public async Task<List<User>> GetUserList()
         {
             string sqlQuery = "SELECT UserId, FirstName, LastName, STUFF(Email, 1, 3, '***') AS MaskedEmail, PhoneNumber, Password FROM Users";

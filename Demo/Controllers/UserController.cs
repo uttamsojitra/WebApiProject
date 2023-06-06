@@ -15,7 +15,7 @@ namespace Demo.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -91,8 +91,6 @@ namespace Demo.Controllers
             {
                 return BadRequest("Invalid activation token or email.");
             }
-            
-
             return Ok("Your account has been activated successfully.");
         }
 
@@ -151,6 +149,14 @@ namespace Demo.Controllers
         {
             string names = await _userService.GetEmpFirstName();
             return Ok(names);
+        }
+
+        [HttpGet("exportUser")]
+        public async Task<IActionResult> ExportUsersToExcel()
+        {
+            var excelBytes = await _userService.ExportUsersDataToExcel();
+
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "users.xlsx");
         }
     }
 }

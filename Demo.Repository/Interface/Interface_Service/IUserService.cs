@@ -11,7 +11,7 @@ namespace Demo.Business.Interface.Interface_Service
     public interface IUserService
     {
         public Task<User> GetUserById(int id);
-       
+        public Task<byte[]> ExportUsersDataToExcel();
         public Task<IEnumerable<User>> GetAllUsers(int pageNumber, int pageSize);
         public int GetTotalPages(int pageSize);
         public int GetTotalUsersCount();
