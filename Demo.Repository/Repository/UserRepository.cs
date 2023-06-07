@@ -73,7 +73,7 @@ namespace Demo.Repository.Repository
                 LastName = row["LastName"].ToString(),
                 Email = row["MaskedEmail"].ToString(),
                 Password = row["Password"].ToString(),
-                PhoneNumber = Convert.ToInt64(row["PhoneNumber"])
+                PhoneNumber = row["PhoneNumber"].ToString()
             }).ToList();
 
             return users;
@@ -109,8 +109,8 @@ namespace Demo.Repository.Repository
                 newUser.Email = user.Email;
                 newUser.Password = user.Password;
                 newUser.FirstName = user.FirstName; 
-                newUser.LastName = user.LastName;   
-                newUser.PhoneNumber = user.PhoneNumber;
+                newUser.LastName = user.LastName;
+                //newUser.PhoneNumber = user.PhoneNumber;
                 newUser.Status = false;
                 newUser.Token = token;
                 

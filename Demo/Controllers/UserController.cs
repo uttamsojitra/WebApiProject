@@ -151,12 +151,22 @@ namespace Demo.Controllers
             return Ok(names);
         }
 
-        [HttpGet("exportUser")]
+        [HttpGet("UserExcelFile")]
         public async Task<IActionResult> ExportUsersToExcel()
         {
             var excelBytes = await _userService.ExportUsersDataToExcel();
-
+            //sets filename 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "users.xlsx");
         }
+
+        [HttpGet("UserPdfFile")]
+        public async Task<IActionResult> ExportUsersToPDF()
+        {
+            var pdfBytes = await _userService.ExportUsersDataToPDF();
+            var fileName = "users.pdf"; // Specify the desired file name
+
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+
     }
 }

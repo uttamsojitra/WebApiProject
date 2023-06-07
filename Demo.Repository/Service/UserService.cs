@@ -4,6 +4,8 @@ using Demo.Entities.Model;
 using Demo.Entities.Model.ViewModel;
 using Demo.Repository.Interface;
 using Demo.Repository.Repository;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
@@ -105,16 +107,16 @@ namespace Demo.Repository.Service
                 var worksheet = package.Workbook.Worksheets.Add("Users");
 
                 // Set the column headers
-                worksheet.Cells[1, 1].Value = "First Name";
-                worksheet.Cells[1, 2].Value = "Last Name";
+                worksheet.Cells[1, 1].Value = "User Name";
+                worksheet.Cells[1, 2].Value = "Email";
                 worksheet.Cells[1, 3].Value = "Phone Number";
 
                 // Add the user data
                 var rowIndex = 2;
                 foreach (var user in users)
                 {
-                    worksheet.Cells[rowIndex, 1].Value = user.FirstName;
-                    worksheet.Cells[rowIndex, 2].Value = user.LastName;
+                    worksheet.Cells[rowIndex, 1].Value = user.FirstName +" "+ user.LastName;
+                    worksheet.Cells[rowIndex, 2].Value = user.Email;
                     worksheet.Cells[rowIndex, 3].Value = user.PhoneNumber;
 
                     rowIndex++;
@@ -122,19 +124,69 @@ namespace Demo.Repository.Service
 
                 // Auto-fit columns
                 worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                // Set left alignment for the phone number column
+                var phoneColumn = worksheet.Column(3);
+                phoneColumn.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
+
                 //ExcelPackage is converted to a byte array 
                 return package.GetAsByteArray();
             }
             catch (Exception ex)
             {
-                // Handle the exception (e.g., logging, error response)
-                // You can customize this part based on your application's requirements
-                Console.WriteLine(ex.Message);
-                throw; // Rethrow the exception to propagate it further if needed
+                throw new Exception(ex.Message);
             }
         }
 
 
+        public async Task<byte[]> ExportUsersDataToPDF()
+        {
+        try
+        {
+            var users = await _userRepository.GetUsersData();
 
-    }
+            using var memoryStream = new MemoryStream();
+            using (var document = new Document())
+            {
+                PdfWriter writer = PdfWriter.GetInstance(document, memoryStream);
+                document.Open();
+
+                // Create the table with three columns
+                PdfPTable table = new(3);
+
+                // Set the column widths (adjust as needed)
+                float[] columnWidths = new float[] { 1f, 1.5f, 1f };
+                table.SetWidths(columnWidths);
+
+                // Set the column headers
+                table.AddCell("User Name");
+                table.AddCell("Email");
+                table.AddCell("Phone Number");
+
+                    
+                // Add the user data
+                foreach (var user in users)
+                {
+                    table.AddCell(user.FirstName + " " + user.LastName);
+                    table.AddCell(user.Email);
+                    table.AddCell(user.PhoneNumber);
+                }
+
+                // Add the table to the document
+                document.Add(table);
+
+                document.Close();
+                writer.Close();
+            }
+
+            // Convert the memory stream to a byte array
+            return memoryStream.ToArray();
+        }
+        catch (Exception ex)
+         {
+             throw new Exception(ex.Message);
+         }
+        }
+
+  }
 }
