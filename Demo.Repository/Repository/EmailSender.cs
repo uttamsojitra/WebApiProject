@@ -8,39 +8,43 @@ using System.Net.Mail;
 using Demo.Business.Interface;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Hosting;
+using Demo.Entities.Model.ViewModel;
+using Microsoft.Extensions.Options;
 
 namespace Demo.Business.Repository
 {
     public class EmailSender : IEmailSender
     {
         private readonly IWebHostEnvironment _env;
-
+        private readonly IOptions<SmtpSettings> _smtpSetting;
+       
         //service to access hosting environment
-        public EmailSender(IWebHostEnvironment env)
+        public EmailSender(IWebHostEnvironment env, IOptions<SmtpSettings> smtp)
         {
             _env = env;
+            _smtpSetting = smtp;        
         }
         public async Task SendEmailAsync(string email, string message, string subject)
         {
-            
-            var client = new SmtpClient("172.16.10.7", 25)
+
+            var client = new SmtpClient(_smtpSetting.Value.Host, _smtpSetting.Value.Port)
             {
-                EnableSsl = false,
+                EnableSsl = _smtpSetting.Value.EnableSsl,
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential("uttam.sojitra@internal.mail", "tatva123")
+                Credentials = new NetworkCredential(_smtpSetting.Value.Username, _smtpSetting.Value.Password)
             };
 
             if (_env.IsDevelopment())
             {
-                email = "uttam.sojitra@internal.mail";
+                email = _smtpSetting.Value.FromEmail;
             }
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress("uttam.sojitra@internal.mail"),
+                From = new MailAddress(_smtpSetting.Value.FromEmail),
                 To = { email },
                 Subject = subject,
-                IsBodyHtml = true,// Set the email body as HTML content
+                IsBodyHtml = true, // Set the email body as HTML content
                 Body = message
             };
 

@@ -14,8 +14,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
-
+using Demo.Entities.Model.ViewModel;
 
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;// Set the license context to NonCommercial
 
@@ -84,6 +83,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
+
+// Configure SMTP settings
+var smtpSettings = builder.Configuration.GetSection("SmtpSettings").Get<SmtpSettings>();
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddSingleton(smtpSettings);
 
 var app = builder.Build();
 

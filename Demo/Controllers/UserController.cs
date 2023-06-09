@@ -155,7 +155,6 @@ namespace Demo.Controllers
         public async Task<IActionResult> ExportUsersToExcel()
         {
             var excelBytes = await _userService.ExportUsersDataToExcel();
-            //sets filename 
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "users.xlsx");
         }
 
@@ -164,8 +163,36 @@ namespace Demo.Controllers
         {
             var pdfBytes = await _userService.ExportUsersDataToPDF();
             var fileName = "users.pdf"; // Specify the desired file name
-
             return File(pdfBytes, "application/pdf", fileName);
+        }
+
+        [HttpGet("UserWordFile")]
+        public async Task<IActionResult> ExportUsersToWord()
+        {
+            var wordBytes = await _userService.ExportUsersDataToWord();
+
+            return File(wordBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "users.docx");
+        }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadUsers(IFormFile file)
+        {
+            if (file == null || file.Length <= 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            using var fileStream = file.OpenReadStream();
+
+            var responseModel = await _userService.StoreUsersFromExcel(fileStream);
+
+            if (responseModel.UsersWithNullEmail.Any())
+            {
+                var errorMessage = "The following users have null email: ";
+                return BadRequest(new { Message = errorMessage, responseModel.UsersWithNullEmail });
+            }
+
+            return Ok("Users uploaded and stored in the database.");
         }
 
     }

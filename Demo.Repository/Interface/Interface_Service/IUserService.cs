@@ -13,6 +13,7 @@ namespace Demo.Business.Interface.Interface_Service
         public Task<User> GetUserById(int id);
         public Task<byte[]> ExportUsersDataToExcel();
         public Task<byte[]> ExportUsersDataToPDF();
+        public Task<byte[]> ExportUsersDataToWord();
         public Task<IEnumerable<User>> GetAllUsers(int pageNumber, int pageSize);
         public int GetTotalPages(int pageSize);
         public int GetTotalUsersCount();
@@ -26,5 +27,7 @@ namespace Demo.Business.Interface.Interface_Service
         public  Task<List<EmployeeViewModel>> EmployeeFromHR();
         public  Task<string> GerAllHireDates();
         public  Task<string> GetEmpFirstName();
+
+        public Task<StoreUsersResponseModel> StoreUsersFromExcel(Stream fileStream);
     }
 }

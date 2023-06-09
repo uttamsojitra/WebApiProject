@@ -21,7 +21,7 @@ namespace Demo.Entities.Model.ViewModel
 
         [Required(ErrorMessage = "Phone number is required.")]
         [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Invalid phone number. Phone number must start with 6, 7, 8, or 9 and must be 10 digits.")]
-        public long PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; }
 
         [Required(ErrorMessage = "Password is required.")]
         [MinLength(8, ErrorMessage = "Please enter at least 8 characters.")]

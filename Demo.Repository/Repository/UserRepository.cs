@@ -110,7 +110,7 @@ namespace Demo.Repository.Repository
                 newUser.Password = user.Password;
                 newUser.FirstName = user.FirstName; 
                 newUser.LastName = user.LastName;
-                //newUser.PhoneNumber = user.PhoneNumber;
+                newUser.PhoneNumber = user.PhoneNumber;
                 newUser.Status = false;
                 newUser.Token = token;
                 
@@ -246,7 +246,12 @@ namespace Demo.Repository.Repository
             return firstNames;
         }
 
-        
+        public async Task AddUserFromFile(User user)
+        {
+            // Add the user entity to the database context
+            _userDbContext.Users.Add(user);
+            await _userDbContext.SaveChangesAsync();
+        }
     }
 }
 

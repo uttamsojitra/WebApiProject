@@ -14,7 +14,7 @@ namespace Demo.Repository.Interface
         public Task<User> GetUser(long id);
         public Task<List<User>> GetUsersData();
 
-
+        public Task AddUserFromFile(User user);
         public Task<User> AddUser(UserSignUpViewModel user);
         public Task<User> GetUserByEmailAndToken(string email, string token);
         public Task<User> GetUserStatus(string email, string token);
