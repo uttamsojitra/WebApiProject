@@ -2,6 +2,7 @@
 using Demo.Business.Interface.Interface_Service;
 using Demo.Entities.Model;
 using Demo.Entities.Model.ViewModel;
+using Demo.Entities.Models;
 using Demo.Repository.Interface;
 using Demo.Repository.Repository;
 using iTextSharp.text;
@@ -38,7 +39,6 @@ namespace Demo.Repository.Service
             var usersPerPage = users.Skip((pageNumber - 1) * pageSize).Take(pageSize);
             return usersPerPage;
         }
-
 
         public int GetTotalPages(int pageSize)
         {
@@ -254,5 +254,10 @@ namespace Demo.Repository.Service
             return responseModel;
         }
 
+        public async Task<List<Skill>> GetAllSkills()
+        {
+           var skills = await _userRepository.GetSkills();
+           return skills;
+        }
     }
 }

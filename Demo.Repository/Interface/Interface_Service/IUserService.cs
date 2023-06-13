@@ -1,5 +1,6 @@
 ﻿using Demo.Entities.Model;
 using Demo.Entities.Model.ViewModel;
+using Demo.Entities.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,5 +30,6 @@ namespace Demo.Business.Interface.Interface_Service
         public  Task<string> GetEmpFirstName();
 
         public Task<StoreUsersResponseModel> StoreUsersFromExcel(Stream fileStream);
+        public Task<List<Skill>> GetAllSkills();
     }
 }

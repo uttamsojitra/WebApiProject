@@ -10,6 +10,7 @@ using Demo.Business.Interface.Interface_Service;
 using Microsoft.AspNetCore.Authorization;
 using Demo.Entities.Model.ViewModel;
 using System.Security.Cryptography;
+using Demo.Entities.Models;
 
 namespace Demo.Controllers
 {
@@ -69,7 +70,13 @@ namespace Demo.Controllers
             return Ok(response);
         }
 
-
+        [HttpGet]
+        [Route("GetUsersSkills")]
+        public async Task<IActionResult> GetSkillList()
+        {
+            var result=  await _userService.GetAllSkills();
+            return Ok(result);
+        }
 
         [AllowAnonymous]
         [HttpGet("activate")]
@@ -174,7 +181,7 @@ namespace Demo.Controllers
             return File(wordBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "users.docx");
         }
 
-        [HttpPost("upload")]
+        [HttpPost("uploadFile")]
         public async Task<IActionResult> UploadUsers(IFormFile file)
         {
             if (file == null || file.Length <= 0)

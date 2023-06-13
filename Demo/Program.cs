@@ -78,6 +78,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 builder.Services.AddDbContext<UserDbcontext>((options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))));
+
+builder.Services.AddDbContext<CiPlatformContext>((options =>
+options.UseSqlServer(builder.Configuration.GetConnectionString("CiPlatformConnection"))));
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();

@@ -9,11 +9,6 @@ namespace Demo.Entities.Model.ViewModel
     public class StoreUsersResponseModel
     {
         public List<UserWithNullEmail> UsersWithNullEmail { get; set; }
-
-        //public StoreUsersResponseModel()
-        //{
-        //    UsersWithNullEmail = new List<UserWithNullEmail>();
-        //}
     }
 
     public class UserWithNullEmail

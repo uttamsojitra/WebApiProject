@@ -1,5 +1,6 @@
 ﻿using Demo.Entities.Model;
 using Demo.Entities.Model.ViewModel;
+using Demo.Entities.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace Demo.Repository.Interface
         public Task<List<User>> GetUserList();
         public Task<User> GetUser(long id);
         public Task<List<User>> GetUsersData();
+        public Task<List<Skill>> GetSkills();
 
         public Task AddUserFromFile(User user);
         public Task<User> AddUser(UserSignUpViewModel user);

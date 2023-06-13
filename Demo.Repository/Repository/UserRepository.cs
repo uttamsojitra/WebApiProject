@@ -9,26 +9,30 @@ using Demo.Business.Interface;
 using Demo.Entities.Data;
 using Demo.Entities.Model;
 using Demo.Entities.Model.ViewModel;
+using Demo.Entities.Models;
 using Demo.Repository.Interface;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
+using System.Text.Json.Serialization;
 
 namespace Demo.Repository.Repository
 {
     public class UserRepository : IUserRepository
     {
-       
+
         private readonly UserDbcontext _userDbContext;
+        private readonly CiPlatformContext _ciPlatformContext;
         private readonly string _connectionString;
         private readonly IEmailSender _emailSender;
 
-        public UserRepository(UserDbcontext userDbContext, IEmailSender emailSender)
+        public UserRepository(UserDbcontext userDbContext, IEmailSender emailSender, CiPlatformContext ciPlatformContext)
         {
             _userDbContext = userDbContext;
             _connectionString = GetConnectionString();
             _emailSender = emailSender;
+            _ciPlatformContext = ciPlatformContext;
         }
 
         private string GetConnectionString()
@@ -58,8 +62,21 @@ namespace Demo.Repository.Repository
 
         public async Task<List<User>> GetUsersData()
         {
-          return  await _userDbContext.Users.ToListAsync(); 
+            return await _userDbContext.Users.ToListAsync();
         }
+
+        public async Task<List<Skill>> GetSkills()
+        {
+            var skills = await _ciPlatformContext.Skills
+            .Select(skill => new Skill
+            {
+                SkillId = skill.SkillId,
+                SkillName = skill.SkillName
+            }).ToListAsync();
+
+            return skills;
+        }
+
 
         public async Task<List<User>> GetUserList()
         {
@@ -84,7 +101,7 @@ namespace Demo.Repository.Repository
             var user = await _userDbContext.Users.FindAsync(id);
             return user;
         }
-       
+
         public async Task<User> GetAuthUser(string Email, string Password)
         {
             User user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == Email && u.Password == Password);
@@ -99,7 +116,7 @@ namespace Demo.Repository.Repository
         }
         public async Task<User> AddUser(UserSignUpViewModel user)
         {
-           var ExistUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            var ExistUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
 
             if (ExistUser == null)
             {
@@ -108,12 +125,12 @@ namespace Demo.Repository.Repository
                 User newUser = new();
                 newUser.Email = user.Email;
                 newUser.Password = user.Password;
-                newUser.FirstName = user.FirstName; 
+                newUser.FirstName = user.FirstName;
                 newUser.LastName = user.LastName;
                 newUser.PhoneNumber = user.PhoneNumber;
                 newUser.Status = false;
                 newUser.Token = token;
-                
+
                 _userDbContext.Users.Add(newUser);
                 await _userDbContext.SaveChangesAsync();
 
@@ -122,25 +139,25 @@ namespace Demo.Repository.Repository
                 string filePath = Path.Combine(Directory.GetCurrentDirectory(), templatePath);
 
                 string MailText;
-                using (StreamReader reader = new (filePath))
+                using (StreamReader reader = new(filePath))
                 {
                     MailText = reader.ReadToEnd();
                 }
 
                 string activationLink = "https://localhost:7149/api/User/activate?email=" + user.Email + "&token=" + token;
 
-                    string emailContent = MailText
-                        .Replace("{{UserName}}", newUser.FirstName + " " + newUser.LastName)
-                        .Replace("{{ActivationLink}}", activationLink);
+                string emailContent = MailText
+                    .Replace("{{UserName}}", newUser.FirstName + " " + newUser.LastName)
+                    .Replace("{{ActivationLink}}", activationLink);
 
 
-                    var subject = "User Status ActivationLink";
-                    await _emailSender.SendEmailAsync(user.Email, emailContent, subject);
+                var subject = "User Status ActivationLink";
+                await _emailSender.SendEmailAsync(user.Email, emailContent, subject);
 
-                    return newUser;
-                
+                return newUser;
+
             }
-            return null;   
+            return null;
         }
 
         public async Task<User> GetUserByEmailAndToken(string email, string token)
@@ -193,7 +210,7 @@ namespace Demo.Repository.Repository
         }
 
         //-- Pivot Query  ---
-       public async Task<List<DepartmentViewModel>> EmpByDepartment()
+        public async Task<List<DepartmentViewModel>> EmpByDepartment()
         {
             string sqlQuery = "SELECT * FROM(SELECT EmployeeId, CONCAT(FirstName, ' ', LastName) AS FullName, Department FROM employees) AS SourceTable  PIVOT(  COUNT(employeeId) FOR Department  IN([Sales], [IT],[HR]) ) AS pivot_table ";
             DataTable table = await ExecuteQuery(sqlQuery);
@@ -225,7 +242,7 @@ namespace Demo.Repository.Repository
 
             return employees;
         }
-       
+
         //----- xml path query ------
         public async Task<string> GetHiringDates()
         {
@@ -252,6 +269,8 @@ namespace Demo.Repository.Repository
             _userDbContext.Users.Add(user);
             await _userDbContext.SaveChangesAsync();
         }
+
+
     }
 }
 
