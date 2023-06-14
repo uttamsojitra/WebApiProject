@@ -20,7 +20,7 @@ namespace Demo.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-       
+
         public UserController(IUserService userService)
         {
             _userService = userService;
@@ -29,14 +29,14 @@ namespace Demo.Controllers
         [AllowAnonymous]
         [HttpPost]
         [Route("SignUpUser")]
-        public async Task<IActionResult> CreateUser( [FromForm] UserSignUpViewModel user)
+        public async Task<IActionResult> CreateUser([FromForm] UserSignUpViewModel user)
         {
-           var newUser =  await _userService.CreateUser(user);
-            if(newUser == null)
+            var newUser = await _userService.CreateUser(user);
+            if (newUser == null)
             {
                 return Ok("Email Already Exists!");
             }
-            return Ok("User Added Sucessfully!");         
+            return Ok("User Added Sucessfully!");
         }
 
         [HttpGet]
@@ -71,15 +71,15 @@ namespace Demo.Controllers
         }
 
         [HttpGet]
-        [Route("GetUsersSkills")]
+        [Route("GetAllSkills")]
         public async Task<IActionResult> GetSkillList()
         {
-            var result=  await _userService.GetAllSkills();
+            var result = await _userService.GetAllSkills();
             return Ok(result);
         }
 
         [AllowAnonymous]
-        [HttpGet("activate")]
+        [HttpGet("Activate")]
         public async Task<IActionResult> ActivateAccount(string email, string token)
         {
             // Find the user by email and activation token
@@ -105,13 +105,16 @@ namespace Demo.Controllers
         [Route("UpdateUser")]
         public async Task<IActionResult> UpdateUser(User user)
         {
-            if (user == null)
+            var updatedUser = await _userService.UpdateUser(user);
+            if (updatedUser != null)
             {
-                return BadRequest("User not updated");
+                return Ok("User updated successfully");
+            }
+            else
+            {
+                return BadRequest("User not found");
             }
 
-            await _userService.UpdateUser(user);
-            return Ok("User Updated");
         }
 
         [HttpDelete]
@@ -202,5 +205,38 @@ namespace Demo.Controllers
             return Ok("Users uploaded and stored in the database.");
         }
 
+        [HttpGet("GetAllEmployeesName")]
+        public async Task<IActionResult> GetEmployeeName()
+        {
+            var Emplyee = await _userService.GetEmployeesName();
+            return Ok(Emplyee);
+        }
+
+        [HttpGet("employee/count-by-department")]
+        public async Task<ActionResult<Dictionary<string, int>>> GetEmployeeCountByDepartment()
+        {
+            try
+            {
+                var countByDepartment = await _userService.GetEmployeeCountByDepartment();
+                return Ok(countByDepartment);
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions and return an appropriate error response
+                return StatusCode(500, "An error occurred while retrieving employee count by department.");
+            }
+        }
+
+        [HttpGet]
+        [Route("GetEmployeeById")]
+        public async Task<ActionResult<Employee>> GetEmployeeById(int id)
+        {
+            var employee = await _userService.GetEmployeeById(id);
+            if (employee == null)
+            {
+                throw new ArgumentException(MessageHelper.InvalidUser);
+            }
+            return employee;
+        }
     }
 }

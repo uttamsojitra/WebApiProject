@@ -21,15 +21,18 @@ namespace Demo.Business.Interface.Interface_Service
         public Task<User> CreateUser(UserSignUpViewModel user);
         public Task<User> GetEmailAndToken(string email, string token);
         public Task<User> GetUserStatus(string email, string token);
-        public Task UpdateUser(User user);
+        public Task<User> UpdateUser(User user);
         public Task<bool> DeleteUser(int id);
-
-        public  Task<List<DepartmentViewModel>> EmployeeByDept();
-        public  Task<List<EmployeeViewModel>> EmployeeFromHR();
-        public  Task<string> GerAllHireDates();
-        public  Task<string> GetEmpFirstName();
-
+        public Task<List<DepartmentViewModel>> EmployeeByDept();
+        public Task<List<EmployeeViewModel>> EmployeeFromHR();
+        public Task<string> GerAllHireDates();
+        public Task<string> GetEmpFirstName();
         public Task<StoreUsersResponseModel> StoreUsersFromExcel(Stream fileStream);
-        public Task<List<Skill>> GetAllSkills();
+        public Task<List<string>> GetAllSkills();
+
+        //---  Employee Repo ----
+        public Task<List<string>> GetEmployeesName();
+        public Task<Dictionary<string, int>> GetEmployeeCountByDepartment();
+        public Task<Employee> GetEmployeeById(int id);
     }
 }

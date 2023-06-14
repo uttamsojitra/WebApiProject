@@ -1,18 +1,10 @@
-﻿using Demo.Business.Exception;
+﻿using Demo.Business.Interface;
 using Demo.Business.Interface.Interface_Service;
 using Demo.Entities.Model;
 using Demo.Entities.Model.ViewModel;
-using Demo.Entities.Models;
 using Demo.Repository.Interface;
-using Demo.Repository.Repository;
-using iTextSharp.text;
 using iTextSharp.text.pdf;
 using OfficeOpenXml;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xceed.Document.NET;
 using Xceed.Words.NET;
 
@@ -21,10 +13,12 @@ namespace Demo.Repository.Service
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IEmployeeRepository _employeeRepository;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IEmployeeRepository employeeRepository)
         {
             _userRepository = userRepository;
+            _employeeRepository = employeeRepository;
         }
 
         //-------    User CRUD operation    -------
@@ -66,9 +60,10 @@ namespace Demo.Repository.Service
         {
             return await _userRepository.GetUserStatus(email, token);
         }
-        public async Task UpdateUser(User user)
+        public async Task<User> UpdateUser(User user)
         {
-            await _userRepository.UpdateUser(user);
+           var users = await _userRepository.UpdateUser(user);
+           return users;
         }
 
         public async Task<bool> DeleteUser(int id)
@@ -99,6 +94,8 @@ namespace Demo.Repository.Service
             return await _userRepository.GetAllFirstName();
         }
 
+
+        //-----  Export to Excel-Pdf-Word  -----
         public async Task<byte[]> ExportUsersDataToExcel()
         {
             var users = await _userRepository.GetUsersData();
@@ -134,7 +131,6 @@ namespace Demo.Repository.Service
             //ExcelPackage is converted to a byte array 
             return package.GetAsByteArray();
         }
-
 
         public async Task<byte[]> ExportUsersDataToPDF()
         {
@@ -213,6 +209,7 @@ namespace Demo.Repository.Service
             return memoryStream.ToArray();
         }
 
+        //----  Import excelfile and save data in DataBase   ----
         public async Task<StoreUsersResponseModel> StoreUsersFromExcel(Stream fileStream)
         {
             using var package = new ExcelPackage(fileStream);
@@ -244,7 +241,7 @@ namespace Demo.Repository.Service
                     {
                         FirstName = worksheet.Cells[row, 1].Value?.ToString(),
                         LastName = worksheet.Cells[row, 2].Value?.ToString(),
-                        
+
                     };
 
                     responseModel.UsersWithNullEmail.Add(userWithNullEmail);
@@ -254,10 +251,29 @@ namespace Demo.Repository.Service
             return responseModel;
         }
 
-        public async Task<List<Skill>> GetAllSkills()
+        public async Task<List<string>> GetAllSkills()
         {
-           var skills = await _userRepository.GetSkills();
-           return skills;
+            var skills = await _userRepository.GetSkills();
+            return skills;
+        }
+        //---  Employee-Repo  -----
+        public async Task<List<string>> GetEmployeesName()
+        {
+            return await _employeeRepository.GetEmployeeByName();
+        }
+
+        public async Task<Dictionary<string, int>> GetEmployeeCountByDepartment()
+        {
+            var employees = await _employeeRepository.GetEmployeesAsync();
+            var countByDepartment = employees.GroupBy(e => e.Department)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            return countByDepartment;
+        }
+
+        public async Task<Employee> GetEmployeeById(int id)
+        {
+            return await _employeeRepository.GetEmployeeById(id);
         }
     }
 }
