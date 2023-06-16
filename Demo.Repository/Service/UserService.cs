@@ -60,10 +60,16 @@ namespace Demo.Repository.Service
         {
             return await _userRepository.GetUserStatus(email, token);
         }
-        public async Task<User> UpdateUser(User user)
+
+        public async Task<User> UpdateUser(UpdateUserViewModel user)
         {
            var users = await _userRepository.UpdateUser(user);
            return users;
+        }
+
+        public async Task AddRangeUsers(UserSignUpViewModel[] users)
+        {
+            await _userRepository.AddUsers(users);
         }
 
         public async Task<bool> DeleteUser(int id)
@@ -76,19 +82,28 @@ namespace Demo.Repository.Service
             return true;
         }
 
+
+        public async Task<List<UserNotFoundViewModel>> UpdateUsers(UpdateUserViewModel[] users)
+        {
+            return await _userRepository.UpdateUsers(users);
+        }
+
         //-------    Sql queries on Employee table    -------
         public async Task<List<DepartmentViewModel>> EmployeeByDept()
         {
             return await _userRepository.EmpByDepartment();
         }
+
         public async Task<List<EmployeeViewModel>> EmployeeFromHR()
         {
             return await _userRepository.EmployeeFromHR();
         }
+
         public async Task<string> GerAllHireDates()
         {
             return await _userRepository.GetHiringDates();
         }
+
         public async Task<string> GetEmpFirstName()
         {
             return await _userRepository.GetAllFirstName();
@@ -256,6 +271,7 @@ namespace Demo.Repository.Service
             var skills = await _userRepository.GetSkills();
             return skills;
         }
+
         //---  Employee-Repo  -----
         public async Task<List<string>> GetEmployeesName()
         {
@@ -273,7 +289,41 @@ namespace Demo.Repository.Service
 
         public async Task<Employee> GetEmployeeById(int id)
         {
-            return await _employeeRepository.GetEmployeeById(id);
+            return await _employeeRepository.GetEmployee(id);
         }
+
+        public async Task<bool> DeleteEmployee(int id)
+        {
+            var result = await _employeeRepository.RemoveEmployee(id);
+            if (!result)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public async Task<Employee> CreateEmployee(NewEmployee NewEmployee)
+        {
+            var newEmployee = await _employeeRepository.AddEmployee(NewEmployee);
+            return newEmployee;
+        }
+
+        public async Task AddRangeEmployees(NewEmployee[] NewEmployees)
+        {
+            await _employeeRepository.AddEmployees(NewEmployees);
+        }
+
+        public async Task<Employee> UpdateEmployee(UpdateEmployeeViewModel employee)
+        {
+            var updateEmployee = await _employeeRepository.UpdateEmployee(employee);
+            return updateEmployee;
+        }
+
+        public async Task<List<EmployeeNotFoundViewModel>> UpdateEmployees(UpdateEmployeeViewModel[] employees)
+        {
+            return await _employeeRepository.UpdateEmployees(employees);
+        }
+
     }
+
 }

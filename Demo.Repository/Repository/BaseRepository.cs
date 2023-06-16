@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace Demo.Business.Repository
 {
     public class BaseRepository<TEntity> : IBaseRepository<TEntity>
@@ -24,34 +25,32 @@ namespace Demo.Business.Repository
 
         public async Task<TEntity> AddAsync(TEntity entity)
         {
-
             await _dbSet.AddAsync(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
         }
 
-        //public async Task AddRangeAsync(TEntity[] entities)
-        //{
-        //    await _dbSet.AddRangeAsync(entities);
-        //    await _dbContext.SaveChangesAsync();
-        //}
+        public async Task AddRangeAsync(TEntity[] entities)
+        {
+            await _dbSet.AddRangeAsync(entities);
+            await _dbContext.SaveChangesAsync();
+        }
 
         public async Task<TEntity> UpdateAsync(TEntity entity)
         {
-            _dbContext.Set<TEntity>().Update(entity);
+            _dbSet.Update(entity);
             await _dbContext.SaveChangesAsync();
             return entity;
-
         }
 
-        //public async Task UpdateRangeAsync(TEntity[] entities)
-        //{
-        //    foreach (var entity in entities)
-        //    {
-        //        _dbContext.Entry(entity).State = EntityState.Modified;
-        //    }
-        //    await _dbContext.SaveChangesAsync();
-        //}
+        public async Task UpdateRangeAsync(TEntity[] entities)
+        {
+            foreach (var entity in entities)
+            {
+                _dbContext.Entry(entity).State = EntityState.Modified;
+            }
+            await _dbContext.SaveChangesAsync();
+        }
 
         public async Task<TEntity?> ByIdAsync(long id)
         {

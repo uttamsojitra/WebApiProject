@@ -15,12 +15,13 @@ namespace Demo.Repository.Interface
         public Task<User> GetUser(long id);
         public Task<List<User>> GetUsersData();
         public Task<List<string>> GetSkills();
-
         public Task AddUserFromFile(User user);
         public Task<User> AddUser(UserSignUpViewModel user);
+        public Task AddUsers(UserSignUpViewModel[] users);
+        public Task<User> UpdateUser(UpdateUserViewModel user);
+        public Task<List<UserNotFoundViewModel>> UpdateUsers(UpdateUserViewModel[] users);
         public Task<User> GetUserByEmailAndToken(string email, string token);
         public Task<User> GetUserStatus(string email, string token);
-        public Task<User> UpdateUser(User user);
         public Task<bool> RemoveUser(long id);
         public int GetTotalUsersCount();
 

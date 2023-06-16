@@ -39,6 +39,62 @@ namespace Demo.Controllers
             return Ok("User Added Sucessfully!");
         }
 
+        [HttpPost("AddUsers")]
+        public async Task<IActionResult> AddUsers(UserSignUpViewModel[] users)
+        {
+            try
+            {
+                await _userService.AddRangeUsers(users);
+                return Ok("Users added successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPut]
+        [Route("UpdateUser")]
+        public async Task<IActionResult> UpdateUser(UpdateUserViewModel user)
+        {
+            var updatedUser = await _userService.UpdateUser(user);
+            if (updatedUser != null)
+            {
+                return Ok("User updated successfully");
+            }
+            else
+            {
+                return BadRequest("User not found");
+            }
+
+        }
+
+        [HttpPut("UpdateRangeUsers")]
+        public async Task<ActionResult<List<EmployeeNotFoundViewModel>>> UpdateUsers(UpdateUserViewModel[] users)
+        {
+            var userIdsNotFound = await _userService.UpdateUsers(users);
+
+            if (userIdsNotFound.Count > 0)
+            {
+                var errorMessage = "The following users not found, please enter correct UserId ";
+                return BadRequest(new { Message = errorMessage, userIdsNotFound });
+            }
+
+            return Ok("All Users Updated ");
+        }
+
+        [HttpDelete]
+        [Route("DeleteUser")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var result = await _userService.DeleteUser(id);
+            if (!result)
+            {
+                throw new InvalidOperationException(MessageHelper.UserNotRemove);
+            }
+            return Ok("User Deleted");
+        }
+
         [HttpGet]
         [Route("GetUserById")]
         public async Task<ActionResult<User>> GetUserById(int id)
@@ -101,34 +157,8 @@ namespace Demo.Controllers
             return Ok("Your account has been activated successfully.");
         }
 
-        [HttpPut]
-        [Route("UpdateUser")]
-        public async Task<IActionResult> UpdateUser(User user)
-        {
-            var updatedUser = await _userService.UpdateUser(user);
-            if (updatedUser != null)
-            {
-                return Ok("User updated successfully");
-            }
-            else
-            {
-                return BadRequest("User not found");
-            }
 
-        }
-
-        [HttpDelete]
-        [Route("DeleteUser")]
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            var result = await _userService.DeleteUser(id);
-            if (!result)
-            {
-                throw new InvalidOperationException(MessageHelper.UserNotRemove);
-            }
-            return Ok("User Deleted");
-        }
-
+        //----   SQL - Queries 
         [HttpGet]
         [Route("GetEmployeesByDepartment")]
         public async Task<ActionResult<List<DepartmentViewModel>>> GetEmployeesByDepartment()
@@ -161,6 +191,8 @@ namespace Demo.Controllers
             return Ok(names);
         }
 
+
+        //----   Export to Excel-Word-Pdf
         [HttpGet("UserExcelFile")]
         public async Task<IActionResult> ExportUsersToExcel()
         {
@@ -184,6 +216,8 @@ namespace Demo.Controllers
             return File(wordBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "users.docx");
         }
 
+
+        //-- Upload excelfile and store data in Database
         [HttpPost("uploadFile")]
         public async Task<IActionResult> UploadUsers(IFormFile file)
         {
@@ -215,15 +249,37 @@ namespace Demo.Controllers
         [HttpGet("employee/count-by-department")]
         public async Task<ActionResult<Dictionary<string, int>>> GetEmployeeCountByDepartment()
         {
+            var countByDepartment = await _userService.GetEmployeeCountByDepartment();
+            return Ok(countByDepartment);
+        }
+
+
+        //--- CRUD - Employee  ----
+
+        [AllowAnonymous]
+        [HttpPost]
+        [Route("AddEmployee")]
+        public async Task<IActionResult> CreateEmployee(NewEmployee employee)
+        {
+            var newUser = await _userService.CreateEmployee(employee);
+            if (newUser == null)
+            {
+                return Ok("Email Already Exists!");
+            }
+            return Ok("Employee Added Sucessfully!");
+        }
+
+        [HttpPost("AddEmployees")]
+        public async Task<IActionResult> AddEmployees(NewEmployee[] employees)
+        {
             try
             {
-                var countByDepartment = await _userService.GetEmployeeCountByDepartment();
-                return Ok(countByDepartment);
+                await _userService.AddRangeEmployees(employees);
+                return Ok("Employees added successfully.");
             }
             catch (Exception ex)
             {
-                // Handle any exceptions and return an appropriate error response
-                return StatusCode(500, "An error occurred while retrieving employee count by department.");
+                return StatusCode(500, $"An error occurred: {ex.InnerException.Message}");
             }
         }
 
@@ -237,6 +293,47 @@ namespace Demo.Controllers
                 throw new ArgumentException(MessageHelper.InvalidUser);
             }
             return employee;
+        }
+
+        [HttpDelete]
+        [Route("DeleteEmployee")]
+        public async Task<IActionResult> DeleteEmployee(int id)
+        {
+            var result = await _userService.DeleteEmployee(id);
+            if (!result)
+            {
+                throw new InvalidOperationException(MessageHelper.UserNotRemove);
+            }
+            return Ok("Employee Deleted");
+        }
+
+        [HttpPut]
+        [Route("UpdateEmployee")]
+        public async Task<IActionResult> UpdateEmployee(UpdateEmployeeViewModel employee)
+        {
+            var updatedUser = await _userService.UpdateEmployee(employee);
+            if (updatedUser != null)
+            {
+                return Ok("Employee updated successfully");
+            }
+            else
+            {
+                return BadRequest("Employee not found");
+            }
+        }
+
+        [HttpPut("UpdateRangeEmployees")]
+        public async Task<ActionResult<List<EmployeeNotFoundViewModel>>> UpdateEmployees(UpdateEmployeeViewModel[] users)
+        {
+            var employeeIdsNotFound = await _userService.UpdateEmployees(users);
+
+            if (employeeIdsNotFound.Count > 0)
+            {
+                var errorMessage = "The following employees not found, please enter correct EmployeeId ";
+                return BadRequest(new { Message = errorMessage, employeeIdsNotFound });
+            }
+
+            return Ok("All Users Updated ");
         }
     }
 }

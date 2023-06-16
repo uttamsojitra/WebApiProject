@@ -23,13 +23,12 @@ namespace Demo.Repository.Repository
 {
     public class UserRepository : BaseRepository<User>, IUserRepository
     {
-
         private readonly UserDbcontext _userDbContext;
         private readonly CiPlatformContext _ciPlatformContext;
         private readonly string _connectionString;
         private readonly IEmailSender _emailSender;
 
-        public UserRepository(UserDbcontext userDbContext, IEmailSender emailSender, CiPlatformContext ciPlatformContext): base(userDbContext)
+        public UserRepository(UserDbcontext userDbContext, IEmailSender emailSender, CiPlatformContext ciPlatformContext) : base(userDbContext)
         {
             _userDbContext = userDbContext;
             _connectionString = GetConnectionString();
@@ -68,25 +67,138 @@ namespace Demo.Repository.Repository
             return await ByIdAsync(id);
         }
 
-        public async Task<User> UpdateUser(User user)
+        public async Task<User> AddUser(UserSignUpViewModel user)
         {
-            var updateUser = await ByIdAsync(user.UserId);
+            var ExistUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+
+            if (ExistUser == null)
+            {
+                var token = CreateRandomToken();
+
+                User newUser = new();
+                newUser.Email = user.Email;
+                newUser.Password = user.Password;
+                newUser.FirstName = user.FirstName;
+                newUser.LastName = user.LastName;
+                newUser.PhoneNumber = user.PhoneNumber;
+                newUser.Status = false;
+                newUser.Token = token;
+
+                await AddAsync(newUser);
+
+                string templatePath = Path.Combine("Template", "Account_Activation_EmailTemplate.html");
+                string filePath = Path.Combine(Directory.GetCurrentDirectory(), templatePath);
+
+                string MailText;
+                using (StreamReader reader = new(filePath))
+                {
+                    MailText = reader.ReadToEnd();
+                }
+
+                string activationLink = "https://localhost:7149/api/User/activate?email=" + user.Email + "&token=" + token;
+
+                string emailContent = MailText
+                    .Replace("{{UserName}}", newUser.FirstName + " " + newUser.LastName)
+                    .Replace("{{ActivationLink}}", activationLink);
+
+
+                var subject = "User Status ActivationLink";
+                await _emailSender.SendEmailAsync(user.Email, emailContent, subject);
+
+                return newUser;
+
+            }
+            return null;
+        }
+
+        public async Task AddUsers(UserSignUpViewModel[] users)
+        {
+            var newUserEntities = users.Select(user =>
+            {
+                return new User
+                {
+                    Email = user.Email,
+                    Password = user.Password,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    PhoneNumber = user.PhoneNumber,
+                    Status = false,
+                    Token = CreateRandomToken()
+                };
+            }).ToArray();
+            await AddRangeAsync(newUserEntities);
+        }
+
+        public async Task<User> UpdateUser(UpdateUserViewModel user)
+        {
+            User updateUser = await ByIdAsync(user.UserId);
             if (updateUser != null)
             {
-                return await UpdateAsync(user);
+                updateUser.Email = user.Email;
+                updateUser.FirstName = user.FirstName;
+                updateUser.LastName = user.LastName;
+                updateUser.PhoneNumber = user.PhoneNumber;
+                updateUser.Status = user.Status;
+                updateUser.Password = user.Password;
+
+                return await UpdateAsync(updateUser);
             }
             return updateUser;
         }
 
+        public async Task<List<UserNotFoundViewModel>> UpdateUsers(UpdateUserViewModel[] users)
+        {
+            var userIdsNotFound = new List<UserNotFoundViewModel>();
+            var existingUsers = await GetByIdsAsync(users.Select(u => u.UserId).ToList());
+
+            var updatedUsers = users.Select(user =>
+            {
+                var existingUser = existingUsers.FirstOrDefault(u => u.UserId == user.UserId);
+                if (existingUser != null)
+                {
+                    existingUser.Email = user.Email;
+                    existingUser.FirstName = user.FirstName;
+                    existingUser.LastName = user.LastName;
+                    existingUser.PhoneNumber = user.PhoneNumber;
+                    existingUser.Status = user.Status;
+                    existingUser.Password = user.Password;
+                }
+                return existingUser;
+            }).Where(user => user != null).ToArray();
+
+
+            if (updatedUsers.Length > 0)
+            {
+                await UpdateRangeAsync(updatedUsers);
+            }
+
+            userIdsNotFound = users.Where(user => updatedUsers.All(u => u.UserId != user.UserId))
+                                  .Select(user => new UserNotFoundViewModel
+                                  {
+                                      UserId = user.UserId,
+                                      UserName = user.FirstName + " " + user.LastName
+                                  })
+                                  .ToList();
+
+            return userIdsNotFound;
+        }
+
+
+        public async Task<List<User>> GetByIdsAsync(List<long> userIds)
+        {
+            return await _userDbContext.Users.Where(u => userIds.Contains(u.UserId)).ToListAsync();
+        }
+
         public async Task<bool> RemoveUser(long id)
         {
-            var user = await ByIdAsync(id);
+            User user = await ByIdAsync(id);
             if (user != null)
             {
                 return await RemoveAsync(user);
             }
             return false;
         }
+
         public async Task<List<User>> GetUsersData()
         {
             return await _userDbContext.Users.ToListAsync();
@@ -94,7 +206,7 @@ namespace Demo.Repository.Repository
 
         public async Task<List<string>> GetSkills()
         {
-            return  await _ciPlatformContext.Skills.Select(a => a.SkillName).ToListAsync();
+            return await _ciPlatformContext.Skills.Select(a => a.SkillName).ToListAsync();
         }
 
         public async Task<List<User>> GetUserList()
@@ -149,52 +261,6 @@ namespace Demo.Repository.Repository
         private static string CreateRandomToken()
         {
             return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
-        }
-
-        public async Task<User> AddUser(UserSignUpViewModel user)
-        {
-            var ExistUser = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
-
-            if (ExistUser == null)
-            {
-                var token = CreateRandomToken();
-
-                User newUser = new();
-                newUser.Email = user.Email;
-                newUser.Password = user.Password;
-                newUser.FirstName = user.FirstName;
-                newUser.LastName = user.LastName;
-                newUser.PhoneNumber = user.PhoneNumber;
-                newUser.Status = false;
-                newUser.Token = token;
-
-                _userDbContext.Users.Add(newUser);
-                await _userDbContext.SaveChangesAsync();
-
-
-                string templatePath = Path.Combine("Template", "Account_Activation_EmailTemplate.html");
-                string filePath = Path.Combine(Directory.GetCurrentDirectory(), templatePath);
-
-                string MailText;
-                using (StreamReader reader = new(filePath))
-                {
-                    MailText = reader.ReadToEnd();
-                }
-
-                string activationLink = "https://localhost:7149/api/User/activate?email=" + user.Email + "&token=" + token;
-
-                string emailContent = MailText
-                    .Replace("{{UserName}}", newUser.FirstName + " " + newUser.LastName)
-                    .Replace("{{ActivationLink}}", activationLink);
-
-
-                var subject = "User Status ActivationLink";
-                await _emailSender.SendEmailAsync(user.Email, emailContent, subject);
-
-                return newUser;
-
-            }
-            return null;
         }
 
         public async Task<User> GetUserByEmailAndToken(string email, string token)
@@ -289,7 +355,7 @@ namespace Demo.Repository.Repository
         {
             // Add the user entity to the database context
             _userDbContext.Users.Add(user);
-            await _userDbContext.SaveChangesAsync();     
+            await _userDbContext.SaveChangesAsync();
         }
 
     }

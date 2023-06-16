@@ -11,15 +11,15 @@ namespace Demo.Business.Interface
     {
         Task<TEntity> AddAsync(TEntity entity);
 
-        //Task AddRangeAsync(TEntity[] entities);
+        Task AddRangeAsync(TEntity[] entities);
+
         Task<TEntity> UpdateAsync(TEntity entity);
 
-        //Task UpdateRangeAsync(TEntity[] entities);
+        Task UpdateRangeAsync(TEntity[] entities);
+
         Task<TEntity?> ByIdAsync(long id);
 
-        //Task<TEntity> RequireByIdAsync(Guid id);
         Task<bool> RemoveAsync(TEntity entity);
-
 
     }
 }
