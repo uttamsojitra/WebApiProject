@@ -1,4 +1,5 @@
-﻿using Demo.Entities.Model;
+﻿using Demo.Business.Interface;
+using Demo.Entities.Model;
 using Demo.Entities.Model.ViewModel;
 using Demo.Entities.Models;
 using System;
@@ -9,26 +10,16 @@ using System.Threading.Tasks;
 
 namespace Demo.Repository.Interface
 {
-    public interface IUserRepository
+    public interface IUserRepository : IBaseRepository<User>
     {
-        public Task<List<User>> GetUserList();
-        public Task<User> GetUser(long id);
+        public Task<List<User>> GetUserList();       
+        public Task<User> GetUserEmail(string email);
         public Task<List<User>> GetUsersData();
-        public Task<List<string>> GetSkills();
-        public Task AddUserFromFile(User user);
-        public Task<User> AddUser(UserSignUpViewModel user);
-        public Task AddUsers(UserSignUpViewModel[] users);
-        public Task<User> UpdateUser(UpdateUserViewModel user);
-        public Task<List<UserNotFoundViewModel>> UpdateUsers(UpdateUserViewModel[] users);
+        public Task<List<string>> GetSkills();      
         public Task<User> GetUserByEmailAndToken(string email, string token);
         public Task<User> GetUserStatus(string email, string token);
-        public Task<bool> RemoveUser(long id);
         public int GetTotalUsersCount();
-
         public Task<User> GetAuthUser(string Email, string Password);
-        public Task<List<DepartmentViewModel>> EmpByDepartment();
-        public Task<List<EmployeeViewModel>> EmployeeFromHR();
-        public Task<string> GetHiringDates();
-        public Task<string> GetAllFirstName();
+        public Task<List<User>> GetByIdsAsync(List<long> userIds);
     }
 }

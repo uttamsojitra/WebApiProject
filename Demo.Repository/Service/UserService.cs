@@ -5,6 +5,7 @@ using Demo.Entities.Model.ViewModel;
 using Demo.Repository.Interface;
 using iTextSharp.text.pdf;
 using OfficeOpenXml;
+using System.Security.Cryptography;
 using Xceed.Document.NET;
 using Xceed.Words.NET;
 
@@ -13,18 +14,17 @@ namespace Demo.Repository.Service
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IEmployeeRepository _employeeRepository;
-
-        public UserService(IUserRepository userRepository, IEmployeeRepository employeeRepository)
+        private readonly IEmailSender _emailSender;
+        public UserService(IUserRepository userRepository, IEmailSender emailSender)
         {
             _userRepository = userRepository;
-            _employeeRepository = employeeRepository;
+            _emailSender = emailSender;
         }
 
         //-------    User CRUD operation    -------
         public async Task<User> GetUserById(int id)
         {
-            return await _userRepository.GetUser(id);
+            return await _userRepository.ByIdAsync(id);
         }
 
         public async Task<IEnumerable<User>> GetAllUsers(int pageNumber, int pageSize)
@@ -45,10 +45,131 @@ namespace Demo.Repository.Service
             return _userRepository.GetTotalUsersCount();
         }
 
+        private static string CreateRandomToken()
+        {
+            return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+        }
+
         public async Task<User> CreateUser(UserSignUpViewModel user)
         {
-            var newUser = await _userRepository.AddUser(user);
-            return newUser;
+            var existUser = await _userRepository.GetUserEmail(user.Email);
+
+            if (existUser == null)
+            {
+                var token = CreateRandomToken();
+
+                User newUser = new();
+                newUser.Email = user.Email;
+                newUser.Password = user.Password;
+                newUser.FirstName = user.FirstName;
+                newUser.LastName = user.LastName;
+                newUser.PhoneNumber = user.PhoneNumber;
+                newUser.Status = false;
+                newUser.Token = token;
+
+                await _userRepository.AddAsync(newUser);
+
+                string templatePath = Path.Combine("Template", "Account_Activation_EmailTemplate.html");
+                string filePath = Path.Combine(Directory.GetCurrentDirectory(), templatePath);
+
+                string MailText;
+                using (StreamReader reader = new(filePath))
+                {
+                    MailText = reader.ReadToEnd();
+                }
+
+                string activationLink = "https://localhost:7149/api/User/activate?email=" + user.Email + "&token=" + token;
+
+                string emailContent = MailText
+                    .Replace("{{UserName}}", newUser.FirstName + " " + newUser.LastName)
+                    .Replace("{{ActivationLink}}", activationLink);
+
+
+                var subject = "User Status ActivationLink";
+                await _emailSender.SendEmailAsync(user.Email, emailContent, subject);
+                return newUser;
+            }
+            return null;
+        }
+
+        public async Task AddRangeUsers(UserSignUpViewModel[] users)
+        {
+            var newUserEntities = users.Select(user =>
+            {
+                return new User
+                {
+                    Email = user.Email,
+                    Password = user.Password,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    PhoneNumber = user.PhoneNumber,
+                    Status = false,
+                    Token = CreateRandomToken()
+                };
+            }).ToArray();
+            await _userRepository.AddRangeAsync(newUserEntities);
+        }
+
+        public async Task<User> UpdateUser(UpdateUserViewModel user)
+        {
+            User updateUser = await _userRepository.ByIdAsync(user.UserId);
+            if (updateUser != null)
+            {
+                updateUser.Email = user.Email;
+                updateUser.FirstName = user.FirstName;
+                updateUser.LastName = user.LastName;
+                updateUser.PhoneNumber = user.PhoneNumber;
+                updateUser.Status = user.Status;
+                updateUser.Password = user.Password;
+
+                return await _userRepository.UpdateAsync(updateUser);
+            }
+            return updateUser;
+        }
+
+        public async Task<List<UserNotFoundViewModel>> UpdateUsers(UpdateUserViewModel[] users)
+        {
+            var userIdsNotFound = new List<UserNotFoundViewModel>();
+            var existingUsers = await _userRepository.GetByIdsAsync(users.Select(u => u.UserId).ToList());
+
+            var updatedUsers = users.Select(user =>
+            {
+                var existingUser = existingUsers.FirstOrDefault(u => u.UserId == user.UserId);
+                if (existingUser != null)
+                {
+                    existingUser.Email = user.Email;
+                    existingUser.FirstName = user.FirstName;
+                    existingUser.LastName = user.LastName;
+                    existingUser.PhoneNumber = user.PhoneNumber;
+                    existingUser.Status = user.Status;
+                    existingUser.Password = user.Password;
+                }
+                return existingUser;
+            }).Where(user => user != null).ToArray();
+
+
+            if (updatedUsers.Length > 0)
+            {
+                await _userRepository.UpdateRangeAsync(updatedUsers);
+            }
+
+            userIdsNotFound = users.Where(user => updatedUsers.All(u => u.UserId != user.UserId))
+                                  .Select(user => new UserNotFoundViewModel
+                                  {
+                                      UserId = user.UserId,
+                                      UserName = user.FirstName + " " + user.LastName
+                                  }).ToList();
+            return userIdsNotFound;
+        }
+        
+        public async Task<bool> DeleteUser(int id)
+        {
+            User user = await _userRepository.ByIdAsync(id);
+            if (user != null)
+            {
+                return await _userRepository.RemoveAsync(user);
+            }
+            return false;
         }
 
         public async Task<User> GetEmailAndToken(string email, string token)
@@ -60,55 +181,6 @@ namespace Demo.Repository.Service
         {
             return await _userRepository.GetUserStatus(email, token);
         }
-
-        public async Task<User> UpdateUser(UpdateUserViewModel user)
-        {
-           var users = await _userRepository.UpdateUser(user);
-           return users;
-        }
-
-        public async Task AddRangeUsers(UserSignUpViewModel[] users)
-        {
-            await _userRepository.AddUsers(users);
-        }
-
-        public async Task<bool> DeleteUser(int id)
-        {
-            var result = await _userRepository.RemoveUser(id);
-            if (!result)
-            {
-                return false;
-            }
-            return true;
-        }
-
-
-        public async Task<List<UserNotFoundViewModel>> UpdateUsers(UpdateUserViewModel[] users)
-        {
-            return await _userRepository.UpdateUsers(users);
-        }
-
-        //-------    Sql queries on Employee table    -------
-        public async Task<List<DepartmentViewModel>> EmployeeByDept()
-        {
-            return await _userRepository.EmpByDepartment();
-        }
-
-        public async Task<List<EmployeeViewModel>> EmployeeFromHR()
-        {
-            return await _userRepository.EmployeeFromHR();
-        }
-
-        public async Task<string> GerAllHireDates()
-        {
-            return await _userRepository.GetHiringDates();
-        }
-
-        public async Task<string> GetEmpFirstName()
-        {
-            return await _userRepository.GetAllFirstName();
-        }
-
 
         //-----  Export to Excel-Pdf-Word  -----
         public async Task<byte[]> ExportUsersDataToExcel()
@@ -224,7 +296,7 @@ namespace Demo.Repository.Service
             return memoryStream.ToArray();
         }
 
-        //----  Import excelfile and save data in DataBase   ----
+        //----  Import data from excelfile and save data in DataBase   ----
         public async Task<StoreUsersResponseModel> StoreUsersFromExcel(Stream fileStream)
         {
             using var package = new ExcelPackage(fileStream);
@@ -245,9 +317,8 @@ namespace Demo.Repository.Service
                         Email = email,
                         PhoneNumber = worksheet.Cells[row, 4].Value?.ToString()
                     };
-
                     // Store the user in the database
-                    await _userRepository.AddUserFromFile(user);
+                    await _userRepository.AddAsync(user);
                 }
                 else
                 {
@@ -256,13 +327,10 @@ namespace Demo.Repository.Service
                     {
                         FirstName = worksheet.Cells[row, 1].Value?.ToString(),
                         LastName = worksheet.Cells[row, 2].Value?.ToString(),
-
                     };
-
-                    responseModel.UsersWithNullEmail.Add(userWithNullEmail);
+                        responseModel.UsersWithNullEmail.Add(userWithNullEmail);
                 }
             }
-
             return responseModel;
         }
 
@@ -271,59 +339,5 @@ namespace Demo.Repository.Service
             var skills = await _userRepository.GetSkills();
             return skills;
         }
-
-        //---  Employee-Repo  -----
-        public async Task<List<string>> GetEmployeesName()
-        {
-            return await _employeeRepository.GetEmployeeByName();
-        }
-
-        public async Task<Dictionary<string, int>> GetEmployeeCountByDepartment()
-        {
-            var employees = await _employeeRepository.GetEmployeesAsync();
-            var countByDepartment = employees.GroupBy(e => e.Department)
-                .ToDictionary(g => g.Key, g => g.Count());
-
-            return countByDepartment;
-        }
-
-        public async Task<Employee> GetEmployeeById(int id)
-        {
-            return await _employeeRepository.GetEmployee(id);
-        }
-
-        public async Task<bool> DeleteEmployee(int id)
-        {
-            var result = await _employeeRepository.RemoveEmployee(id);
-            if (!result)
-            {
-                return false;
-            }
-            return true;
-        }
-
-        public async Task<Employee> CreateEmployee(NewEmployee NewEmployee)
-        {
-            var newEmployee = await _employeeRepository.AddEmployee(NewEmployee);
-            return newEmployee;
-        }
-
-        public async Task AddRangeEmployees(NewEmployee[] NewEmployees)
-        {
-            await _employeeRepository.AddEmployees(NewEmployees);
-        }
-
-        public async Task<Employee> UpdateEmployee(UpdateEmployeeViewModel employee)
-        {
-            var updateEmployee = await _employeeRepository.UpdateEmployee(employee);
-            return updateEmployee;
-        }
-
-        public async Task<List<EmployeeNotFoundViewModel>> UpdateEmployees(UpdateEmployeeViewModel[] employees)
-        {
-            return await _employeeRepository.UpdateEmployees(employees);
-        }
-
     }
-
-}
+}   

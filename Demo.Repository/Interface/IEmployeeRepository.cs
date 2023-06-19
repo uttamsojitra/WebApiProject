@@ -8,16 +8,17 @@ using System.Threading.Tasks;
 
 namespace Demo.Business.Interface
 {
-    public interface IEmployeeRepository
+    public interface IEmployeeRepository : IBaseRepository<Employee>
     {
         public Task<List<string>> GetEmployeeByName();
         public Task<List<Employee>> GetEmployeesAsync();
+        public Task<List<Employee>> GetByIdsAsync(List<long> employeeIds);
+        public Task<Employee> GetEmployeeEmail(string email);
 
-        public Task<Employee> GetEmployee(long id);
-        public Task<bool> RemoveEmployee(long id);
-        public Task<Employee> AddEmployee(NewEmployee employee);
-        public Task<Employee> UpdateEmployee(UpdateEmployeeViewModel employee);
-        public Task AddEmployees(NewEmployee[] employees);
-        public Task<List<EmployeeNotFoundViewModel>> UpdateEmployees(UpdateEmployeeViewModel[] employees);
+        // Sql Queries
+        public Task<List<DepartmentViewModel>> EmpByDepartment();
+        public Task<List<EmployeeViewModel>> EmployeeFromHR();
+        public Task<string> GetHiringDates();
+        public Task<string> GetAllFirstName();
     }
 }

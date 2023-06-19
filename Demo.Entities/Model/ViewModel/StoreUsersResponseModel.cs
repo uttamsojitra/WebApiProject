@@ -6,11 +6,15 @@ using System.Threading.Tasks;
 
 namespace Demo.Entities.Model.ViewModel
 {
-    public class StoreUsersResponseModel
+    public class StoreUsersResponseModel        
     {
         public List<UserWithNullEmail> UsersWithNullEmail { get; set; }
-    }
 
+        public StoreUsersResponseModel()
+        {
+            UsersWithNullEmail = new List<UserWithNullEmail>();
+        }
+    }
     public class UserWithNullEmail
     {
         public string? FirstName { get; set; }

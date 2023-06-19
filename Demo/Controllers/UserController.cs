@@ -27,8 +27,8 @@ namespace Demo.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost]
-        [Route("SignUpUser")]
+        [HttpPost("signUpUser")]
+
         public async Task<IActionResult> CreateUser([FromForm] UserSignUpViewModel user)
         {
             var newUser = await _userService.CreateUser(user);
@@ -39,7 +39,7 @@ namespace Demo.Controllers
             return Ok("User Added Sucessfully!");
         }
 
-        [HttpPost("AddUsers")]
+        [HttpPost("addUsers")]
         public async Task<IActionResult> AddUsers(UserSignUpViewModel[] users)
         {
             try
@@ -53,8 +53,7 @@ namespace Demo.Controllers
             }
         }
 
-        [HttpPut]
-        [Route("UpdateUser")]
+        [HttpPut("updateUser")]
         public async Task<IActionResult> UpdateUser(UpdateUserViewModel user)
         {
             var updatedUser = await _userService.UpdateUser(user);
@@ -69,7 +68,7 @@ namespace Demo.Controllers
 
         }
 
-        [HttpPut("UpdateRangeUsers")]
+        [HttpPut("updateRangeUsers")]
         public async Task<ActionResult<List<EmployeeNotFoundViewModel>>> UpdateUsers(UpdateUserViewModel[] users)
         {
             var userIdsNotFound = await _userService.UpdateUsers(users);
@@ -83,8 +82,7 @@ namespace Demo.Controllers
             return Ok("All Users Updated ");
         }
 
-        [HttpDelete]
-        [Route("DeleteUser")]
+        [HttpDelete("deleteUser")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var result = await _userService.DeleteUser(id);
@@ -95,8 +93,7 @@ namespace Demo.Controllers
             return Ok("User Deleted");
         }
 
-        [HttpGet]
-        [Route("GetUserById")]
+        [HttpGet("users/{id}")]
         public async Task<ActionResult<User>> GetUserById(int id)
         {
             var user = await _userService.GetUserById(id);
@@ -107,8 +104,7 @@ namespace Demo.Controllers
             return user;
         }
 
-        [HttpGet]
-        [Route("GetAllUsers")]
+        [HttpGet("getAllUsers")]
         public async Task<IActionResult> GetAllUsers(int pageNumber = 1, int pageSize = 5)
         {
             var result = await _userService.GetAllUsers(pageNumber, pageSize);
@@ -126,8 +122,7 @@ namespace Demo.Controllers
             return Ok(response);
         }
 
-        [HttpGet]
-        [Route("GetAllSkills")]
+        [HttpGet("getAllSkills")]
         public async Task<IActionResult> GetSkillList()
         {
             var result = await _userService.GetAllSkills();
@@ -135,7 +130,7 @@ namespace Demo.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("Activate")]
+        [HttpGet("activate")]
         public async Task<IActionResult> ActivateAccount(string email, string token)
         {
             // Find the user by email and activation token
@@ -157,50 +152,15 @@ namespace Demo.Controllers
             return Ok("Your account has been activated successfully.");
         }
 
-
-        //----   SQL - Queries 
-        [HttpGet]
-        [Route("GetEmployeesByDepartment")]
-        public async Task<ActionResult<List<DepartmentViewModel>>> GetEmployeesByDepartment()
-        {
-            List<DepartmentViewModel> departments = await _userService.EmployeeByDept();
-            return Ok(departments);
-        }
-
-        [HttpGet]
-        [Route("GetEmployeesFromHR")]
-        public async Task<ActionResult<List<EmployeeViewModel>>> GetEmployeesFromHR()
-        {
-            List<EmployeeViewModel> employees = await _userService.EmployeeFromHR();
-            return Ok(employees);
-        }
-
-        [HttpGet]
-        [Route("GerAllHireDates")]
-        public async Task<ActionResult<string>> GerAllHireDates()
-        {
-            string dates = await _userService.GerAllHireDates();
-            return Ok(dates);
-        }
-
-        [HttpGet]
-        [Route("GetEmployeesFirstName")]
-        public async Task<ActionResult<string>> GetEmployeesFirstName()
-        {
-            string names = await _userService.GetEmpFirstName();
-            return Ok(names);
-        }
-
-
         //----   Export to Excel-Word-Pdf
-        [HttpGet("UserExcelFile")]
+        [HttpGet("userExcelFile")]
         public async Task<IActionResult> ExportUsersToExcel()
         {
             var excelBytes = await _userService.ExportUsersDataToExcel();
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "users.xlsx");
         }
 
-        [HttpGet("UserPdfFile")]
+        [HttpGet("userPdfFile")]
         public async Task<IActionResult> ExportUsersToPDF()
         {
             var pdfBytes = await _userService.ExportUsersDataToPDF();
@@ -208,14 +168,12 @@ namespace Demo.Controllers
             return File(pdfBytes, "application/pdf", fileName);
         }
 
-        [HttpGet("UserWordFile")]
+        [HttpGet("userWordFile")]
         public async Task<IActionResult> ExportUsersToWord()
         {
             var wordBytes = await _userService.ExportUsersDataToWord();
-
             return File(wordBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "users.docx");
         }
-
 
         //-- Upload excelfile and store data in Database
         [HttpPost("uploadFile")]
@@ -237,103 +195,6 @@ namespace Demo.Controllers
             }
 
             return Ok("Users uploaded and stored in the database.");
-        }
-
-        [HttpGet("GetAllEmployeesName")]
-        public async Task<IActionResult> GetEmployeeName()
-        {
-            var Emplyee = await _userService.GetEmployeesName();
-            return Ok(Emplyee);
-        }
-
-        [HttpGet("employee/count-by-department")]
-        public async Task<ActionResult<Dictionary<string, int>>> GetEmployeeCountByDepartment()
-        {
-            var countByDepartment = await _userService.GetEmployeeCountByDepartment();
-            return Ok(countByDepartment);
-        }
-
-
-        //--- CRUD - Employee  ----
-
-        [AllowAnonymous]
-        [HttpPost]
-        [Route("AddEmployee")]
-        public async Task<IActionResult> CreateEmployee(NewEmployee employee)
-        {
-            var newUser = await _userService.CreateEmployee(employee);
-            if (newUser == null)
-            {
-                return Ok("Email Already Exists!");
-            }
-            return Ok("Employee Added Sucessfully!");
-        }
-
-        [HttpPost("AddEmployees")]
-        public async Task<IActionResult> AddEmployees(NewEmployee[] employees)
-        {
-            try
-            {
-                await _userService.AddRangeEmployees(employees);
-                return Ok("Employees added successfully.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred: {ex.InnerException.Message}");
-            }
-        }
-
-        [HttpGet]
-        [Route("GetEmployeeById")]
-        public async Task<ActionResult<Employee>> GetEmployeeById(int id)
-        {
-            var employee = await _userService.GetEmployeeById(id);
-            if (employee == null)
-            {
-                throw new ArgumentException(MessageHelper.InvalidUser);
-            }
-            return employee;
-        }
-
-        [HttpDelete]
-        [Route("DeleteEmployee")]
-        public async Task<IActionResult> DeleteEmployee(int id)
-        {
-            var result = await _userService.DeleteEmployee(id);
-            if (!result)
-            {
-                throw new InvalidOperationException(MessageHelper.UserNotRemove);
-            }
-            return Ok("Employee Deleted");
-        }
-
-        [HttpPut]
-        [Route("UpdateEmployee")]
-        public async Task<IActionResult> UpdateEmployee(UpdateEmployeeViewModel employee)
-        {
-            var updatedUser = await _userService.UpdateEmployee(employee);
-            if (updatedUser != null)
-            {
-                return Ok("Employee updated successfully");
-            }
-            else
-            {
-                return BadRequest("Employee not found");
-            }
-        }
-
-        [HttpPut("UpdateRangeEmployees")]
-        public async Task<ActionResult<List<EmployeeNotFoundViewModel>>> UpdateEmployees(UpdateEmployeeViewModel[] users)
-        {
-            var employeeIdsNotFound = await _userService.UpdateEmployees(users);
-
-            if (employeeIdsNotFound.Count > 0)
-            {
-                var errorMessage = "The following employees not found, please enter correct EmployeeId ";
-                return BadRequest(new { Message = errorMessage, employeeIdsNotFound });
-            }
-
-            return Ok("All Users Updated ");
         }
     }
 }

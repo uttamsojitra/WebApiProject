@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -62,6 +63,9 @@ namespace Demo.Business.Repository
             _dbSet.Remove(entity);
             return await _dbContext.SaveChangesAsync() > 0;
         }
-
+        public virtual Task<TEntity[]> AllAsync(Expression<Func<TEntity, bool>> specification)
+        {
+            return _dbSet.Where(specification).ToArrayAsync();
+        }
     }
 }
