@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UserDemo.Data.migrations;
 
 namespace Demo.Business.Service
 {
@@ -142,8 +143,6 @@ namespace Demo.Business.Service
             }
             return false;
         }
-
-
         //-------    Sql queries on Employee table    -------
 
         public async Task<List<DepartmentViewModel>> EmployeeByDept()

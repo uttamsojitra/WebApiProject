@@ -75,6 +75,30 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AddUpdatePolicy", policy =>
+       policy.RequireRole("admin","user")
+             .RequireAssertion(context =>
+                       context.User.HasClaim(claim =>
+                         (claim.Type == "permission" &&
+                          claim.Value == "CanCreate" || claim.Value == "CanUpdate"
+                         )
+                       )
+                    ));
+
+    options.AddPolicy("DeletePolicy", policy =>
+        policy.RequireRole("admin")
+              .RequireAssertion(context =>
+                       context.User.HasClaim(claim =>
+                         (claim.Type == "permission" &&
+                          (claim.Value == "CanDelete")
+                         )
+                       )
+                    ));
+});
+
+
 
 builder.Services.AddDbContext<UserDbcontext>((options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))));
@@ -90,6 +114,8 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuthHelperService, AuthHelperService>();
 
 
 // Configure SMTP settings
@@ -109,6 +135,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
 
 app.MapControllers();
 

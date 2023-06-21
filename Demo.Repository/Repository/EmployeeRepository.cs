@@ -44,7 +44,6 @@ namespace Demo.Business.Repository
         {
             return await _userDbContext.Employees.ToListAsync();
         }
-
        
         public async Task<Employee> GetEmployeeEmail(string email)
         {
@@ -62,6 +61,7 @@ namespace Demo.Business.Repository
             string sqlQuery = "SELECT * FROM(SELECT EmployeeId, CONCAT(FirstName, ' ', LastName) AS FullName, Department FROM employees) AS SourceTable  PIVOT(  COUNT(employeeId) FOR Department  IN([Sales], [IT],[HR]) ) AS pivot_table ";
 
             using IDbConnection connection = new SqlConnection(_connectionString);
+
             var result = await connection.QueryAsync<DepartmentViewModel>(sqlQuery);
             List<DepartmentViewModel> departments = result.ToList();
             return departments;

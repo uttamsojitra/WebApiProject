@@ -20,10 +20,13 @@ namespace Demo.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IAuthHelperService _authHelperService;
 
-        public UserController(IUserService userService)
+
+        public UserController(IUserService userService, IAuthHelperService authHelperService)
         {
             _userService = userService;
+            _authHelperService = authHelperService; 
         }
 
         [AllowAnonymous]
@@ -39,21 +42,17 @@ namespace Demo.Controllers
             return Ok("User Added Sucessfully!");
         }
 
+
         [HttpPost("addUsers")]
+        [Authorize(Policy = "AddUpdatePolicy")]
         public async Task<IActionResult> AddUsers(UserSignUpViewModel[] users)
         {
-            try
-            {
-                await _userService.AddRangeUsers(users);
-                return Ok("Users added successfully.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred: {ex.Message}");
-            }
+            await _userService.AddRangeUsers(users);
+            return Ok("Users added successfully.");
         }
 
         [HttpPut("updateUser")]
+        [Authorize(Policy = "AddUpdatePolicy")]
         public async Task<IActionResult> UpdateUser(UpdateUserViewModel user)
         {
             var updatedUser = await _userService.UpdateUser(user);
@@ -83,13 +82,19 @@ namespace Demo.Controllers
         }
 
         [HttpDelete("deleteUser")]
+        [Authorize(Policy = "DeletePolicy")]
         public async Task<IActionResult> DeleteUser(int id)
         {
+            //var permission = _authHelperService.Permissions.Any(p => p.Item1 == "CanDelete" && p.Item2);
+            //{
+            //    throw new Exception("Insufficient permissions to delete user.");
+            //}
             var result = await _userService.DeleteUser(id);
             if (!result)
             {
                 throw new InvalidOperationException(MessageHelper.UserNotRemove);
             }
+           
             return Ok("User Deleted");
         }
 
@@ -196,5 +201,12 @@ namespace Demo.Controllers
 
             return Ok("Users uploaded and stored in the database.");
         }
+
+        //var hasAdminPermission = User.Claims.Any(c => c.Type == "permission" && c.Value == "delete");
+        //var permission = _authHelperService.Permissions.Any(p => p.Item1 == "CanDelete" && p.Item2);
+
+        //{
+        //    throw new Exception("Insufficient permissions to delete user.");
+        //}
     }
 }

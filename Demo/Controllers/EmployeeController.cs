@@ -5,6 +5,7 @@ using Demo.Entities.Model.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using UserDemo.Data.migrations;
 
 namespace Demo.Controllers
 {

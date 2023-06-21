@@ -25,7 +25,7 @@ namespace Demo.Business.Exception
             // Handle the exception and generate an appropriate response
             var errorResponse = new ErrorResponse
             {
-                Message = "An error occurred.",
+                Message = context.Exception.Message.ToString(),
                 ErrorCode = 500
             };
 

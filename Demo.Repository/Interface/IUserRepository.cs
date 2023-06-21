@@ -21,5 +21,6 @@ namespace Demo.Repository.Interface
         public int GetTotalUsersCount();
         public Task<User> GetAuthUser(string Email, string Password);
         public Task<List<User>> GetByIdsAsync(List<long> userIds);
+        public Task<User> UserFromEmail(string Email);
     }
 }

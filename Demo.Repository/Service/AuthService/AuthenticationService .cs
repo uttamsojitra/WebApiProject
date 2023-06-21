@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Demo.Business.Service.AuthService;
 
 namespace Demo.Business.Service
 {
@@ -27,19 +28,39 @@ namespace Demo.Business.Service
 
         public async Task<User> GetAuthUser(string Email, string Password)
         {
-            var user = await _userRepository.GetAuthUser(Email, Password);  
-            return user;             
+            var user = await _userRepository.GetAuthUser(Email, Password);
+            return user;
         }
 
-        public (string, string) GenerateTokens(string email)
+        public async Task<User> GetUserFromEmail(string Email)
+        {
+            var user = await _userRepository.UserFromEmail(Email);
+            return user;
+        }
+        public (string, string) GenerateTokens(User user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
+            var claims = new List<Claim>
             {
-            new Claim("Email", email)
+                new Claim("Email", user.Email),
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
+            if (user.Role == "admin")
+            {
+                claims.Add(new Claim("permission", Permissions.CanUserCreate));
+                claims.Add(new Claim("permission", Permissions.CanUserUpdate));
+                claims.Add(new Claim("permission", Permissions.CanUserDelete));
+            }
+            else if (user.Role == "user")
+            {
+                claims.Add(new Claim("permission", Permissions.CanUserCreate));
+                claims.Add(new Claim("permission", Permissions.CanUserUpdate));
+
+                //claims.Add(new Claim("CanCreate", "True"));
+                //claims.Add(new Claim("CanUpdate", "True"));
+            }
             var accessToken = new JwtSecurityToken(
                 _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
@@ -59,7 +80,6 @@ namespace Demo.Business.Service
 
             return (accessTokenString, refreshTokenString);
         }
-
 
         public ClaimsPrincipal ValidateRefreshToken(string token)
         {
@@ -91,14 +111,11 @@ namespace Demo.Business.Service
                     principal = new ClaimsPrincipal(claimsIdentity);
                 }
             }
-
             catch
             {
                 return null;
             }
-
             return principal;
         }
-
     }
 }

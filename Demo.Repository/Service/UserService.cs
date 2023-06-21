@@ -27,24 +27,6 @@ namespace Demo.Repository.Service
             return await _userRepository.ByIdAsync(id);
         }
 
-        public async Task<IEnumerable<User>> GetAllUsers(int pageNumber, int pageSize)
-        {
-            var users = await _userRepository.GetUserList();
-            var usersPerPage = users.Skip((pageNumber - 1) * pageSize).Take(pageSize);
-            return usersPerPage;
-        }
-
-        public int GetTotalPages(int pageSize)
-        {
-            var totalUsers = _userRepository.GetTotalUsersCount();
-            return (int)Math.Ceiling((decimal)totalUsers / pageSize);
-        }
-
-        public int GetTotalUsersCount()
-        {
-            return _userRepository.GetTotalUsersCount();
-        }
-
         private static string CreateRandomToken()
         {
             return Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
@@ -172,6 +154,24 @@ namespace Demo.Repository.Service
             return false;
         }
 
+        public async Task<IEnumerable<User>> GetAllUsers(int pageNumber, int pageSize)
+        {
+            var users = await _userRepository.GetUserList();
+            var usersPerPage = users.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            return usersPerPage;
+        }
+
+        public int GetTotalPages(int pageSize)
+        {
+            var totalUsers = _userRepository.GetTotalUsersCount();
+            return (int)Math.Ceiling((decimal)totalUsers / pageSize);
+        }
+
+        public int GetTotalUsersCount()
+        {
+            return _userRepository.GetTotalUsersCount();
+        }
+
         public async Task<User> GetEmailAndToken(string email, string token)
         {
             return await _userRepository.GetUserByEmailAndToken(email, token);
@@ -207,7 +207,6 @@ namespace Demo.Repository.Service
 
                 rowIndex++;
             }
-
             // Auto-fit columns
             worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
@@ -242,7 +241,6 @@ namespace Demo.Repository.Service
                 table.AddCell("Email");
                 table.AddCell("Phone Number");
 
-
                 // Add the user data
                 foreach (var user in users)
                 {
@@ -250,14 +248,12 @@ namespace Demo.Repository.Service
                     table.AddCell(user.Email);
                     table.AddCell(user.PhoneNumber);
                 }
-
                 // Add the table to the document
                 document.Add(table);
                 document.Close();
                 writer.Close();
             }
             return memoryStream.ToArray();
-
         }
 
         public async Task<byte[]> ExportUsersDataToWord()
@@ -287,8 +283,6 @@ namespace Demo.Repository.Service
                     table.Rows[i + 1].Cells[1].Paragraphs.First().Append(users[i].Email);
                     table.Rows[i + 1].Cells[2].Paragraphs.First().Append(users[i].PhoneNumber);
                 }
-
-
                 document.InsertTable(table);
                 //writes the document content to the memoryStream,
                 document.Save();

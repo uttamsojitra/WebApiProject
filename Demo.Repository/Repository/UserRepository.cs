@@ -81,9 +81,14 @@ namespace Demo.Repository.Repository
             User user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == Email && u.Password == Password);
             return user;
         }
+        public async Task<User> UserFromEmail(string Email)
+        {
+            User user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == Email);
+            return user;
+        }
 
         //Add New User and Mail sent for status activation
-       
+
         public async Task<User> GetUserByEmailAndToken(string email, string token)
         {
             var user = await _userDbContext.Users.FirstOrDefaultAsync(u => u.Email == email && u.Token == token);

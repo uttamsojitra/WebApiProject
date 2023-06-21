@@ -25,7 +25,7 @@ namespace Demo.Controllers
             _authService = authService;        
         }
 
-       private async Task<User> AuthnticateUser(string Email, string Password)
+        private async Task<User> AuthnticateUser(string Email, string Password)
         {
             User user = await _authService.GetAuthUser(Email, Password);
             if(user == null )
@@ -40,7 +40,7 @@ namespace Demo.Controllers
         public async Task<IActionResult> Login(string email, string password)
         {
             IActionResult response = Unauthorized();
-            var validUser = await AuthnticateUser(email, password);
+            User validUser = await AuthnticateUser(email, password);
             if(validUser == null)
             {
                 return response;
@@ -51,7 +51,7 @@ namespace Demo.Controllers
             }
             if (validUser != null)
             {
-                var (accessToken, refreshToken) = _authService.GenerateTokens(email);
+                var (accessToken, refreshToken) = _authService.GenerateTokens(validUser);
                 response = Ok(new { token = accessToken, refreshToken = refreshToken });
             }
             return response;
@@ -59,13 +59,14 @@ namespace Demo.Controllers
 
         [AllowAnonymous]
         [HttpPost("RefreshTokenValidation")]
-        public IActionResult RefreshToken(string refreshToken)
+        public async Task<IActionResult> RefreshToken(string refreshToken)
         {
             var principal = _authService.ValidateRefreshToken(refreshToken);
             if (principal != null)
             {
                 var email = principal.Claims.First(c => c.Type == "Email").Value;
-                var (accessToken, newRefreshToken) = _authService.GenerateTokens(email);
+                var user = await _authService.GetUserFromEmail(email);
+                var (accessToken, newRefreshToken) = _authService.GenerateTokens(user);
                 return Ok(new { token = accessToken, refreshToken = newRefreshToken });
             }
             return Unauthorized();
