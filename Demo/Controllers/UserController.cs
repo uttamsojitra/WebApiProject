@@ -42,19 +42,31 @@ namespace Demo.Controllers
             return Ok("User Added Sucessfully!");
         }
 
+        private void CheckPermission(string permissionType, string errorMessage)
+        {
+            var permission = _authHelperService.Permissions.Any(p => p.Item1 == permissionType && p.Item2);
+            if (!permission)
+            {
+                throw new Exception(errorMessage);
+            }
+        }
 
         [HttpPost("addUsers")]
-        [Authorize(Policy = "AddUpdatePolicy")]
+        [Authorize(Roles ="admin,user")]
         public async Task<IActionResult> AddUsers(UserSignUpViewModel[] users)
         {
+            CheckPermission("CanCreate", "Insufficient permissions to create user."); 
+
             await _userService.AddRangeUsers(users);
             return Ok("Users added successfully.");
         }
 
         [HttpPut("updateUser")]
-        [Authorize(Policy = "AddUpdatePolicy")]
+        [Authorize(Roles = "admin,user")]
         public async Task<IActionResult> UpdateUser(UpdateUserViewModel user)
         {
+            CheckPermission("CanUpdate", "Insufficient permissions to update user.");
+
             var updatedUser = await _userService.UpdateUser(user);
             if (updatedUser != null)
             {
@@ -64,7 +76,6 @@ namespace Demo.Controllers
             {
                 return BadRequest("User not found");
             }
-
         }
 
         [HttpPut("updateRangeUsers")]
@@ -82,13 +93,11 @@ namespace Demo.Controllers
         }
 
         [HttpDelete("deleteUser")]
-        [Authorize(Policy = "DeletePolicy")]
+        [Authorize(Roles ="admin,user")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            //var permission = _authHelperService.Permissions.Any(p => p.Item1 == "CanDelete" && p.Item2);
-            //{
-            //    throw new Exception("Insufficient permissions to delete user.");
-            //}
+            CheckPermission("CanDelete", "Insufficient permissions to update user.");
+            
             var result = await _userService.DeleteUser(id);
             if (!result)
             {

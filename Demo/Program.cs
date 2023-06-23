@@ -87,7 +87,7 @@ builder.Services.AddAuthorization(options =>
                        )
                     ));
 
-    options.AddPolicy("DeletePolicy", policy =>
+    options.AddPolicy("DeletePolicy", policy => 
         policy.RequireRole("admin")
               .RequireAssertion(context =>
                        context.User.HasClaim(claim =>

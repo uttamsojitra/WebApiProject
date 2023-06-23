@@ -17,7 +17,6 @@ namespace Demo.Business.Service
 
         private readonly IHttpContextAccessor _httpContextAccessor;
        
-
         public AuthHelperService(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor; 
@@ -64,10 +63,11 @@ namespace Demo.Business.Service
                     return new();
                 }
                 List<Tuple<string, bool>> Permissions = new();
-                SecurityToken.Claims.Where(x => x.Type.StartsWith("Can")).ToList().ForEach(item =>
-                  {
-                      Permissions.Add(new(item.Type, item.Value == "True"));
-                  });
+                
+                SecurityToken.Claims.Where(x => x.Type == "permission").ToList().ForEach(claim =>
+                {
+                    Permissions.Add(new Tuple<string, bool>(claim.Value, true));
+                });
                 return Permissions;
 
             }
